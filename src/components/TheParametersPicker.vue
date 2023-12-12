@@ -40,6 +40,7 @@ const items = ref([
 <style lang="scss" scoped>
 .parameters-picker {
   position: absolute;
+  z-index: 2;
   top: 0px;
 
   box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.08);

@@ -12,6 +12,7 @@ const zoom = 15;
     <l-map
       ref="map"
       v-model:zoom="zoom"
+      :options="{ zoomControl: false }"
       :center="[50.29117904070245, 18.680356029431803]"
     >
       <l-tile-layer
