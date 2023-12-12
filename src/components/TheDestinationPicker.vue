@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import AutoComplete from "primevue/autocomplete";
-import { TheParametersPicker, TheTripPicker } from ".";
+import { TheParametersPicker } from ".";
 import { ref } from "vue";
 
 const from = ref("");
@@ -54,7 +54,6 @@ const search = (event: any) => {
     />
   </div>
   <TheParametersPicker />
-  <TheTripPicker />
 </template>
 
 <style scoped lang="scss">
