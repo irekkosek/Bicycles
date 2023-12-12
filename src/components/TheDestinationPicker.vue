@@ -59,7 +59,7 @@ const search = (event: any) => {
 <style scoped lang="scss">
 .destination-picker {
   position: relative;
-  z-index: 2;
+  z-index: 3;
   padding: 3rem;
 
   background: linear-gradient(180deg, #387ef9 0%, #bf8bed 100%);
