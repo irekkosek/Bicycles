@@ -60,7 +60,7 @@ const search = (event: any) => {
 .destination-picker {
   position: relative;
   z-index: 3;
-  padding: 3rem;
+  padding: 2.5rem;
 
   background: linear-gradient(180deg, #387ef9 0%, #bf8bed 100%);
   top: -1.5rem;
