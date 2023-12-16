@@ -1,19 +1,50 @@
 <script setup lang="ts">
-import Steps from "primevue/steps";
-import { ref } from "vue";
+import { ref, watch } from "vue";
+import TabMenu, { TabMenuChangeEvent } from "primevue/tabmenu";
+import SelectButton from "primevue/selectbutton";
+
 const isParamPickerExpanded = ref(false);
 
 const items = ref([
   {
-    label: "Bike type",
+    name: "Typ rowera",
+    props: [
+      { value: "type-1", name: "Górski" },
+      { value: "type-2", name: "Miejski" },
+      { value: "type-3", name: "BMX" },
+      { value: "type-4", name: "Szosowy" },
+      { value: "type-5", name: "Inny" },
+    ],
   },
   {
-    label: "Trip goal",
+    name: "Cel wycieczki",
+    props: [
+      { value: "goal-1", name: "Zwiedzanie" },
+      { value: "goal-2", name: "Góry" },
+      { value: "goal-3", name: "Trening" },
+      { value: "goal-4", name: "Gastronomia" },
+    ],
   },
   {
-    label: "Time",
+    name: "Czas podróży",
+    props: [
+      { value: "time-1", name: "< 1h" },
+      { value: "time-2", name: "1-2h" },
+      { value: "time-3", name: "3-4h" },
+      { value: "time-4", name: "5-6h" },
+      { value: "time-5", name: "> 8h" },
+    ],
   },
 ]);
+
+const activeTab = ref(0);
+
+const changeCurrentTabIndex = ({ index }: TabMenuChangeEvent) =>
+  (activeTab.value = index);
+
+const selectedParameters = ref(null);
+
+watch(selectedParameters, () => console.log(selectedParameters.value));
 </script>
 
 <template>
@@ -25,7 +56,30 @@ const items = ref([
         : 'parameters-picker--expanded'
     "
   >
-    <Steps :model="items" />
+    <div
+      v-if="isParamPickerExpanded"
+      class="parameters-picker__items-container"
+    >
+      <SelectButton
+        v-model="selectedParameters"
+        :options="items[activeTab].props"
+        optionLabel="name"
+        multiple
+        aria-labelledby="multiple"
+      />
+    </div>
+
+    <TabMenu
+      :model="items"
+      class="parameters-picker__menu"
+      @tab-change="changeCurrentTabIndex"
+    >
+      <template #item="{ item, props }">
+        <a v-bind="props.action" class="flex align-items-center gap-2">
+          <span class="parameters-picker__menu__item">{{ item.name }}</span>
+        </a>
+      </template>
+    </TabMenu>
     <div
       class="parameters-picker__expander"
       @click="
@@ -53,11 +107,27 @@ const items = ref([
   justify-content: flex-end;
   gap: 2rem;
 
+  &__menu {
+    &__item {
+      font-size: 0.8rem;
+      font-style: normal;
+      font-weight: 300;
+      line-height: normal;
+    }
+  }
+
+  &__items-container {
+    display: flex;
+    flex-direction: row;
+    padding: 1rem;
+    gap: 1rem;
+  }
+
   &--collapsed {
-    height: 25%;
+    height: 23%;
   }
   &--expanded {
-    height: 60%;
+    height: 55%;
   }
 
   &__expander {

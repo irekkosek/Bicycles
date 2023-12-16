@@ -53,4 +53,12 @@ const trips = ref([
     </div>
   </div>
 </template>
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+h2 {
+  position: sticky;
+}
+.favourites-view__items {
+  max-height: 82vh;
+  overflow: scroll;
+}
+</style>
