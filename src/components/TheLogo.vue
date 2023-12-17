@@ -28,12 +28,16 @@
 
 <style lang="scss" scoped>
 .logo-animation {
+  position: absolute;
+  z-index: 100;
+  top: 0;
   background: linear-gradient(
     180deg,
     #4a95cc 0%,
-    rgba(205, 93, 223, 0.55) 100%
+    rgba(205, 93, 223, 100%) 100%
   );
   height: 100vh;
+  width: 100vw;
 }
 @keyframes fadeOut {
   0% {

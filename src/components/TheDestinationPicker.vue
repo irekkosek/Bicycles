@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import AutoComplete from "primevue/autocomplete";
 import { TheParametersPicker } from ".";
-import { ref } from "vue";
+import { ref, watchEffect } from "vue";
 
 const from = ref("");
 const to = ref("");
@@ -12,6 +12,20 @@ const createLoop = () => {
 
 const cities = ["Gliwice", "Mikołów"];
 const filteredCities = ref();
+
+const emit = defineEmits(["destination-chosen", "destination-not-chosen"]);
+
+const isParamPickerVisible = ref(false);
+
+watchEffect(() => {
+  if (from.value && to.value && from.value.length > 0 && to.value.length > 0) {
+    emit("destination-chosen");
+    isParamPickerVisible.value = true;
+  } else {
+    emit("destination-not-chosen");
+    isParamPickerVisible.value = false;
+  }
+});
 
 const search = (event: any) => {
   setTimeout(() => {
@@ -53,14 +67,16 @@ const search = (event: any) => {
       @complete="search"
     />
   </div>
-  <TheParametersPicker />
+  <Transition name="slide-up">
+    <TheParametersPicker v-if="isParamPickerVisible" />
+  </Transition>
 </template>
 
 <style scoped lang="scss">
 .destination-picker {
   position: relative;
   z-index: 3;
-  padding: 3rem;
+  padding: 2.5rem;
 
   background: linear-gradient(180deg, #387ef9 0%, #bf8bed 100%);
   top: -1.5rem;

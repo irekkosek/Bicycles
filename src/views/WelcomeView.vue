@@ -1,13 +1,18 @@
 <script setup lang="ts">
+import { ref } from "vue";
 import { TheDestinationPicker, TheTripPicker } from "../components";
 import { LMap, LTileLayer } from "@vue-leaflet/vue-leaflet";
 
 const zoom = 15;
+
+const isTripPickerVisible = ref(false);
 </script>
 
 <template>
-  <!-- <TheLogo /> -->
-  <TheDestinationPicker />
+  <TheDestinationPicker
+    @destination-chosen="isTripPickerVisible = true"
+    @destination-not-chosen="isTripPickerVisible = false"
+  />
   <div class="map">
     <l-map
       ref="map"
@@ -22,14 +27,17 @@ const zoom = 15;
       ></l-tile-layer>
     </l-map>
   </div>
-  <TheTripPicker />
+  <Transition name="slide-down">
+    <TheTripPicker v-if="isTripPickerVisible" />
+  </Transition>
 </template>
 
 <style lang="scss" scoped>
 .map {
   height: 100vh;
   width: 100vw;
-  position: relative;
+  position: absolute;
   z-index: 0;
+  top: 0;
 }
 </style>
