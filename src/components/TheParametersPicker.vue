@@ -108,6 +108,9 @@ watch(selectedParameters, () => console.log(selectedParameters.value));
   gap: 2rem;
 
   &__menu {
+    a {
+      padding: 0.8rem;
+    }
     &__item {
       font-size: 0.8rem;
       font-style: normal;

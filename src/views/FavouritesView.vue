@@ -57,8 +57,4 @@ const trips = ref([
 h2 {
   position: sticky;
 }
-.favourites-view__items {
-  max-height: 82vh;
-  overflow: scroll;
-}
 </style>

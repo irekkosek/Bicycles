@@ -107,6 +107,8 @@ body:has(.favourites-view) {
   &--centered {
     align-items: center;
     margin: 2rem;
+    max-height: 82vh;
+    overflow: scroll;
   }
 
   .fav-item {
