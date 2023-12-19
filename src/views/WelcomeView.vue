@@ -3,14 +3,14 @@ import { ref } from "vue";
 import { TheDestinationPicker, TheTripPicker } from "../components";
 import { LMap, LTileLayer, LMarker } from "@vue-leaflet/vue-leaflet";
 //import L from "leaflet";
-import { fetchPOI } from "../api";
+//import { fetchPOI } from "../api";
 import { fetchElement } from "../api/getElement";
 
 const zoom = 15;
 
-const isTripPickerVisible = ref(false);
+//const isTripPickerVisible = ref(false);
 
-const map = ref(null)
+//const map = ref(null)
 
 // var map = L.map('map').setView([42.35, -71.08], 3);
 
@@ -39,17 +39,7 @@ const map = ref(null)
   L.geoJson(data).addTo(map);
   console.log(map)
 }*/
-const test2 = async () => {
-  const name = "Rydułtowy";
-  const fields = "name";
-  const limit = 10;
-  const data = await fetchElement(name, fields, limit)
-  console.log(data)
-}
-test2()
-watch(() => isTripPickerVisible.value, () => {
-  //test()
-})
+
 </script>
 
 <template>
