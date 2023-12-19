@@ -1,14 +1,9 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { TheDestinationPicker, TheTripPicker } from "../components";
-<<<<<<< Updated upstream
-import { LMap, LTileLayer } from "@vue-leaflet/vue-leaflet";
-
-const zoom = 15;
-=======
 import { LMap, LTileLayer, LMarker } from "@vue-leaflet/vue-leaflet";
 //import L from "leaflet";
-//import { fetchPOI } from "../api";
+import { fetchPOI } from "../api";
 import { fetchElement } from "../api/getElement";
 
 const zoom = 15;
@@ -55,7 +50,6 @@ test2()
 watch(() => isTripPickerVisible.value, () => {
   //test()
 })
->>>>>>> Stashed changes
 </script>
 
 <template>
