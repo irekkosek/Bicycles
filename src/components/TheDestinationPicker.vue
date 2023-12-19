@@ -2,6 +2,7 @@
 import AutoComplete from "primevue/autocomplete";
 import { TheParametersPicker } from ".";
 import { ref, watchEffect } from "vue";
+import {fetchElement} from "../api/getElement"
 
 const from = ref("");
 const to = ref("");
@@ -9,6 +10,18 @@ const to = ref("");
 const createLoop = () => {
   to.value = from.value;
 };
+const test2 = async () => {
+  const name = "Rydułtowy";
+  const fields = "name";
+  const limit = 1;
+  try{
+  const data = await fetchElement(name, fields, limit)
+  const result=data[0]['properties']['name']
+  return(result)
+  }catch(error){
+    console.error('Wystąpił błąd:', error);
+  }
+}
 
 const cities = ["Gliwice", "Mikołów"];
 const filteredCities = ref();
@@ -32,9 +45,7 @@ const search = (event: any) => {
     if (!event.query.trim().length) {
       filteredCities.value = [...cities];
     } else {
-      filteredCities.value = cities.filter((city) => {
-        return city.toLowerCase().startsWith(event.query.toLowerCase());
-      });
+      filteredCities.value = test2();
     }
   }, 250);
 };
