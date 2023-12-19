@@ -2,7 +2,6 @@ import { ConfigEnv } from "./env.config";
 
 export const fetchElement = async ( name: String, fields: string, limit: number) => {
     const url = `https://api.cyclestreets.net/v2/geocoder?key=${ConfigEnv.apiKey}&q=${name}&limit=${limit}&fields=${fields}`;
-    console.log(url);
     // const response = await fetch(url)
     // await response.json().
     // then((data) => {
@@ -12,7 +11,7 @@ export const fetchElement = async ( name: String, fields: string, limit: number)
     //     console.log(error);
     // }
     // );
-    fetch(url).then(res => res.json()).then(data => {
+    return(fetch(url).then(res => res.json()).then(data => {
         console.log(data);
         console.log(data.features[0]);
         return data.features;
@@ -20,5 +19,5 @@ export const fetchElement = async ( name: String, fields: string, limit: number)
     ).catch((error) => {
         console.log(error);
     }
-    );
+    ));
 };
