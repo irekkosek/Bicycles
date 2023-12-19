@@ -6,34 +6,16 @@ import {fetchElement} from "../api/getElement"
 
 const from = ref("");
 const to = ref("");
+const cities = ["Gliwice", "Mikołów"];
+const filteredCities = ref();
 
 const createLoop = () => {
   to.value = from.value;
 };
-const test2 = async () => {
-  const name = "Rydułtowy";
-  const fields = "name";
-  const limit = 1;
-  try{
-  const data = await fetchElement(name, fields, limit)
-  const result=data[0]['properties']['name']
-  return(result)
-  }catch(error){
-    console.error('Wystąpił błąd:', error);
-  }
-}
 
-const cities = ["Gliwice", "Mikołów"];
-const filteredCities = ref();
-
-const search = (event: any) => {
-  setTimeout(() => {
-    if (!event.query.trim().length) {
-      filteredCities.value = [...cities];
-    } else {
-      filteredCities.value = test2();
-    }
-  }, 250);
+const search = async (event: any) => {
+  const data = await fetchElement(event.query,"name",10)
+  filteredCities.value = data.map(item => `${item.properties.name}, ${item.properties.near}`);
 };
 </script>
 
