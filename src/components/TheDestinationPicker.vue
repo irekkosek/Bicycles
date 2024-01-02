@@ -43,7 +43,7 @@ watchEffect(() => {
 });
 
 const search = async (event: any) => {
-  const data = await fetchElement(event.query,"name",10)
+const data = await fetchElement(event.query,"name",10)
   filteredCities.value = data.map(item => `${item.properties.name}, ${item.properties.near}`);
 };
 </script>
