@@ -25,7 +25,8 @@ watchEffect(() => {
   }
 });
 const search = async (event: any) => {
-const data = await fetchElement(event.query,"name",10)
+const propositions = 10
+const data = await fetchElement(event.query,"name",propositions)
   filteredCities.value = data.map(item => `${item.properties.name}, ${item.properties.near}`);
 };
 </script>
