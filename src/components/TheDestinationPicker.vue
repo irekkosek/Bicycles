@@ -13,9 +13,19 @@ const filteredCities = ref();
 const createLoop = () => {
   to.value = from.value;
 };
-
+const emit = defineEmits(["destination-chosen", "destination-not-chosen"]);
+const isParamPickerVisible = ref(false);
+watchEffect(() => {
+  if (from.value && to.value && from.value.length > 0 && to.value.length > 0) {
+    emit("destination-chosen");
+    isParamPickerVisible.value = true;
+  } else {
+    emit("destination-not-chosen");
+    isParamPickerVisible.value = false;
+  }
+});
 const search = async (event: any) => {
-  const data = await fetchElement(event.query,"name",10)
+const data = await fetchElement(event.query,"name",10)
   filteredCities.value = data.map(item => `${item.properties.name}, ${item.properties.near}`);
 };
 </script>
