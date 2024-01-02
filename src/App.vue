@@ -24,7 +24,11 @@ const items = ref([
   <TheLogo />
   <div id="app">
     <main>
-      <router-view></router-view>
+      <router-view v-slot="{ Component }">
+        <keep-alive>
+          <component :is="Component" />
+        </keep-alive>
+      </router-view>
       <div class="menu">
         <TabMenu :model="items">
           <template #item="{ item, props }">

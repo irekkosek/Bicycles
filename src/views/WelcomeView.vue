@@ -1,18 +1,51 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import { TheDestinationPicker, TheTripPicker } from "../components";
+import {
+  TheDestinationPicker,
+  TheTripPicker,
+  TheTripInfo,
+  TheTripSteps,
+} from "../components";
 import { LMap, LTileLayer } from "@vue-leaflet/vue-leaflet";
 
 const zoom = 15;
 
 const isTripPickerVisible = ref(false);
+const isTripPicked = ref(false);
+
+const chosenTrip = ref();
+const tripDestinations = ref({ from: "", to: "" });
+
+const startNavigating = (e: any) => {
+  isTripPicked.value = true;
+  chosenTrip.value = e;
+};
+
+const stopNavigating = () => {
+  isTripPicked.value = false;
+};
+
+const searchForTrips = (e: any) => {
+  isTripPickerVisible.value = true;
+  tripDestinations.value = e;
+};
 </script>
 
 <template>
   <TheDestinationPicker
-    @destination-chosen="isTripPickerVisible = true"
+    v-if="!isTripPicked"
+    @destination-chosen="searchForTrips"
     @destination-not-chosen="isTripPickerVisible = false"
+    :current-trip="chosenTrip"
   />
+  <Transition name="fade-in">
+    <TheTripInfo
+      v-if="isTripPicked"
+      :chosen-trip="chosenTrip"
+      @trip-cancelled="stopNavigating"
+    />
+  </Transition>
+
   <div class="map">
     <l-map
       ref="map"
@@ -27,8 +60,17 @@ const isTripPickerVisible = ref(false);
       ></l-tile-layer>
     </l-map>
   </div>
+
   <Transition name="slide-down">
-    <TheTripPicker v-if="isTripPickerVisible" />
+    <TheTripPicker
+      v-if="isTripPickerVisible && !isTripPicked"
+      :trip-destinations="tripDestinations"
+      @trip-picked="startNavigating"
+    />
+  </Transition>
+
+  <Transition name="slide-down">
+    <TheTripSteps v-if="isTripPicked" />
   </Transition>
 </template>
 

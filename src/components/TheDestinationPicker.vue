@@ -1,31 +1,31 @@
 <script setup lang="ts">
 import AutoComplete from "primevue/autocomplete";
 import { TheParametersPicker } from ".";
-import { ref, watchEffect } from "vue";
+import { onMounted, ref } from "vue";
+
+const props = defineProps<{ currentTrip: any }>();
 
 const from = ref("");
 const to = ref("");
 
 const createLoop = () => {
   to.value = from.value;
+  checkIfBothSelected();
 };
 
-const cities = ["Gliwice", "Mikołów"];
+onMounted(() => {
+  if (!props.currentTrip) return;
+  from.value = props.currentTrip.from ?? "";
+  to.value = props.currentTrip.to ?? "";
+  checkIfBothSelected();
+});
+
+const cities = ["Gliwice", "Mikołów", "Mikołajki", "Katowice", "Warszawa"];
 const filteredCities = ref();
 
 const emit = defineEmits(["destination-chosen", "destination-not-chosen"]);
 
 const isParamPickerVisible = ref(false);
-
-watchEffect(() => {
-  if (from.value && to.value && from.value.length > 0 && to.value.length > 0) {
-    emit("destination-chosen");
-    isParamPickerVisible.value = true;
-  } else {
-    emit("destination-not-chosen");
-    isParamPickerVisible.value = false;
-  }
-});
 
 const search = (event: any) => {
   setTimeout(() => {
@@ -38,6 +38,23 @@ const search = (event: any) => {
     }
   }, 250);
 };
+
+const checkIfBothSelected = () => {
+  if (from.value && to.value && from.value.length > 0 && to.value.length > 0) {
+    emit("destination-chosen", { from: from.value, to: to.value });
+    isParamPickerVisible.value = true;
+  } else {
+    emit("destination-not-chosen");
+    isParamPickerVisible.value = false;
+  }
+};
+
+const checkIfAnyIsNull = () => {
+  if (!from.value || !to.value) {
+    emit("destination-not-chosen");
+    isParamPickerVisible.value = false;
+  }
+};
 </script>
 
 <template>
@@ -48,7 +65,10 @@ const search = (event: any) => {
         placeholder="Skąd?"
         :suggestions="filteredCities"
         @complete="search"
-        :forceSelection="true"
+        @item-select="checkIfBothSelected"
+        @change="checkIfAnyIsNull"
+        forceSelection
+        :delay="100"
       />
       <transition name="bounce">
         <img
@@ -65,6 +85,10 @@ const search = (event: any) => {
       placeholder="Dokąd?"
       :suggestions="filteredCities"
       @complete="search"
+      @item-select="checkIfBothSelected"
+      @change="checkIfAnyIsNull"
+      forceSelection
+      :delay="100"
     />
   </div>
   <Transition name="slide-up">

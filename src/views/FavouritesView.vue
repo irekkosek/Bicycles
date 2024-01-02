@@ -27,7 +27,10 @@ const trips = ref([
 </script>
 <template>
   <div class="favourites-view">
-    <h2>Favourites</h2>
+    <div class="page-title">
+      <h2>Favourites</h2>
+      <img src="../assets/white-heart-icon.svg" />
+    </div>
     <div class="favourites-view__items favourites-view__items--centered">
       <div v-for="(trip, index) in trips" :key="index" class="fav-item">
         <div class="fav-item__title" @click="trip.expanded = !trip.expanded">
@@ -54,7 +57,91 @@ const trips = ref([
   </div>
 </template>
 <style lang="scss" scoped>
-h2 {
+.page-title {
   position: sticky;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 1rem;
+  h2 {
+    margin: 0;
+  }
+  img {
+    transform: scale(0.8);
+  }
+}
+
+.favourites-view__items {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: flex-start;
+
+  &--centered {
+    align-items: center;
+    margin: 2rem;
+    max-height: 82vh;
+    overflow: scroll;
+  }
+
+  .fav-item {
+    width: 100%;
+
+    border: 1px solid #b55ddf;
+    border-radius: 0.625rem;
+    background: #fff;
+    box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.08);
+
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+
+    &__title {
+      display: flex;
+      justify-content: space-between;
+      &:hover {
+        cursor: pointer;
+      }
+    }
+
+    padding: 0.8rem;
+
+    transition: all 0.2s ease-in-out;
+
+    &__stop {
+      display: flex;
+      justify-content: space-between;
+      flex-direction: row;
+      img {
+        width: 20px;
+      }
+      &__action-buttons {
+        display: flex;
+        gap: 0.2rem;
+        img {
+          border-radius: 1.125rem;
+          background: #fff;
+          padding: 0.4rem;
+          transform: scale(0.8);
+
+          box-shadow: 0px 4px 5px 0px rgba(52, 52, 52, 0.25);
+
+          transition: 0.3s;
+          cursor: pointer;
+          &:hover {
+            background-color: #f1f1f1;
+          }
+        }
+      }
+    }
+
+    &--gradient {
+      background: linear-gradient(93deg, #b55ddf 24.42%, #4a95cc 78.81%);
+      color: #fff;
+      border: 1px solid #fff;
+      box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.08);
+    }
+  }
 }
 </style>
