@@ -2,8 +2,6 @@
 import { ref } from "vue";
 import { TheDestinationPicker, TheTripPicker } from "../components";
 import { LMap, LTileLayer, LMarker } from "@vue-leaflet/vue-leaflet";
-//import L from "leaflet";
-//import { fetchPOI } from "../api";
 import { fetchElement } from "../api/getElement";
 
 const zoom = 15;
