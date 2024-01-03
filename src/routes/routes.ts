@@ -4,7 +4,7 @@ import { WelcomeView, FavouritesView } from "../views";
 export const routes: Array<RouteRecordRaw> = [
   {
     path: "/",
-    name: "Welcome",
+    name: "Map View",
     component: WelcomeView,
   },
   {

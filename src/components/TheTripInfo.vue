@@ -1,7 +1,15 @@
 <script setup lang="ts">
 import Button from "primevue/button";
 
-const props = defineProps<{ chosenTrip: any }>();
+const props = defineProps<{
+  chosenTrip: {
+    from: string;
+    to: string;
+    time: string;
+    distance: string;
+    kcal: string;
+  };
+}>();
 
 const emit = defineEmits(["trip-cancelled"]);
 </script>

@@ -8,12 +8,12 @@ const router = useRouter();
 
 const items = ref([
   {
-    name: "Home",
+    name: "Mapa",
     image: "src/assets/home-icon.svg",
     command: () => router.push("/"),
   },
   {
-    name: "Favourites",
+    name: "Ulubione",
     image: "src/assets/heart-icon.svg",
     command: () => router.push("/favourites"),
   },
@@ -25,9 +25,7 @@ const items = ref([
   <div id="app">
     <main>
       <router-view v-slot="{ Component }">
-        <keep-alive>
-          <component :is="Component" />
-        </keep-alive>
+        <component :is="Component" />
       </router-view>
       <div class="menu">
         <TabMenu :model="items">

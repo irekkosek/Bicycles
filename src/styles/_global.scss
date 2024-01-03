@@ -48,6 +48,31 @@ h2 {
   display: none !important;
 }
 
+.p-overlaypanel {
+  width: 100vw;
+  .p-autocomplete {
+    display: block;
+  }
+}
+
+.p-autocomplete {
+  display: block;
+  input {
+    width: 100%;
+  }
+}
+
+.add-stop {
+  &__button {
+    height: 1.6rem;
+    width: 1.6rem;
+    padding: 0.5rem;
+    .pi {
+      font-size: 0.8rem;
+    }
+  }
+}
+
 .card {
   width: 100%;
   border-radius: 1.375rem;

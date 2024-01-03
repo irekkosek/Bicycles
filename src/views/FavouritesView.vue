@@ -1,41 +1,54 @@
 <script setup lang="ts">
 import { ref } from "vue";
+import { TheMap } from "../components";
 
 const trips = ref([
   {
     from: "Mikołów",
     to: "Gliwice",
-    distance: "24",
+    distance: "24.5km",
+    time: "2 h 23 min",
+    kcal: "243",
     stops: ["Pijalnia Czekolady Wedel", "Palmiarnia Gliwice"],
     expanded: false,
   },
   {
     from: "Mikołów",
     to: "Gliwice",
-    distance: "22.5",
+    distance: "28.4km",
+    time: "2 h 23 min",
+    kcal: "243",
     stops: ["MDK Gliwice", "Palmiarnia Gliwice"],
     expanded: false,
   },
   {
     from: "Mikołów",
     to: "Gliwice",
-    distance: "27.3",
+    distance: "32.1km",
+    time: "2 h 23 min",
+    kcal: "243",
     stops: ["Pijalnia Czekolady Wedel", "Pracownia Artystyczna", "Sushi Bar"],
     expanded: false,
   },
 ]);
+
+const chosenTrip = ref();
+
+const goToMapView = (trip: any) => {
+  chosenTrip.value = trip;
+};
 </script>
 <template>
-  <div class="favourites-view">
+  <div v-if="!chosenTrip" class="favourites-view">
     <div class="page-title">
-      <h2>Favourites</h2>
+      <h2>Ulubione</h2>
       <img src="../assets/white-heart-icon.svg" />
     </div>
     <div class="favourites-view__items favourites-view__items--centered">
       <div v-for="(trip, index) in trips" :key="index" class="fav-item">
         <div class="fav-item__title" @click="trip.expanded = !trip.expanded">
           <div class="fav-item__name">{{ trip.from }} - {{ trip.to }}</div>
-          <div class="fav-item__distance">{{ trip.distance }} km</div>
+          <div class="fav-item__distance">{{ trip.distance }}</div>
         </div>
 
         <div v-if="trip.expanded" class="favourites-view__items">
@@ -48,6 +61,7 @@ const trips = ref([
             <img src="../assets/location-icon.svg" />
           </div>
           <div class="fav-item__stop__action-buttons">
+            <img src="../assets/map-icon.svg" @click="goToMapView(trip)" />
             <img src="../assets/violet-heart-icon.svg" />
             <img src="../assets/download-icon.svg" />
           </div>
@@ -55,6 +69,11 @@ const trips = ref([
       </div>
     </div>
   </div>
+  <TheMap
+    v-else
+    @navigation-stopped="chosenTrip = null"
+    :current-trip="chosenTrip"
+  />
 </template>
 <style lang="scss" scoped>
 .page-title {
@@ -120,6 +139,8 @@ const trips = ref([
         display: flex;
         gap: 0.2rem;
         img {
+          height: 3rem;
+          width: 3rem;
           border-radius: 1.125rem;
           background: #fff;
           padding: 0.4rem;

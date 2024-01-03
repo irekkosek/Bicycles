@@ -58,7 +58,9 @@ const steps = [
         :class="`trip-item trip-item--${type}`"
       >
         <img v-if="type !== 'stop'" :src="icon" />
-        <div class="trip-item__name">{{ label }}: {{ additionalInfo }}</div>
+        <div class="trip-item__name">
+          {{ label }}{{ type === "stop" ? "" : ":" }} {{ additionalInfo }}
+        </div>
         <img
           v-if="type === 'stop'"
           src="../assets/location-icon.svg"

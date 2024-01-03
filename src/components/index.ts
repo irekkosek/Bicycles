@@ -4,3 +4,4 @@ export { default as TheParametersPicker } from "./TheParametersPicker.vue";
 export { default as TheTripPicker } from "./TheTripPicker.vue";
 export { default as TheTripInfo } from "./TheTripInfo.vue";
 export { default as TheTripSteps } from "./TheTripSteps.vue";
+export { default as TheMap } from "./TheMap.vue";
