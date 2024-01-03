@@ -1,6 +1,3 @@
-// write function to fetch Points of Interets from the API
-//https://api.cyclestreets.net/v2/pois.locations?type=cycleparking&longitude=0.11795&latitude=52.20530&radius=5&limit=3&fields=id,latitude,longitude,name,osmTags
-
 import { ConfigEnv } from "./env.config";
 
 export const fetchPOI = async ( lat: number, lon: number, radius: number, limit: number) => {
