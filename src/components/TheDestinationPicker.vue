@@ -2,31 +2,15 @@
 import AutoComplete from "primevue/autocomplete";
 import { TheParametersPicker } from ".";
 import { ref, watchEffect } from "vue";
-import {fetchElement} from "../api/getElement"
+import {fetchGeocodingResults} from "../api/getElement"
 
 const from = ref("");
 const to = ref("");
-const cities = ["Gliwice", "Mikołów"];
 const filteredCities = ref();
 
 const createLoop = () => {
   to.value = from.value;
 };
-const test2 = async () => {
-  const name = "Rydułtowy";
-  const fields = "name";
-  const limit = 1;
-  try{
-  const data = await fetchElement(name, fields, limit)
-  const result=data[0]['properties']['name']
-  return(result)
-  }catch(error){
-    console.error('Wystąpił błąd:', error);
-  }
-}
-
-const cities = ["Gliwice", "Mikołów"];
-const filteredCities = ref();
 
 const emit = defineEmits(["destination-chosen", "destination-not-chosen"]);
 
@@ -44,7 +28,7 @@ watchEffect(() => {
 
 const search = async (event: any) => {
 const propositions = 10
-const data = await fetchElement(event.query,"name",propositions)
+const data = await fetchGeocodingResults(event.query,"name",propositions)
   filteredCities.value = data.map(item => `${item.properties.name}, ${item.properties.near}`);
 };
 </script>
