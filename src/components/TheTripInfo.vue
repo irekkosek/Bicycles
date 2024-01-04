@@ -67,7 +67,7 @@ const emit = defineEmits(["trip-cancelled"]);
     color: #fff;
 
     text-align: center;
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     font-style: normal;
     font-weight: 400;
     line-height: normal;

@@ -105,6 +105,8 @@ const emit = defineEmits(["trip-picked"]);
     .trip-item {
       width: 90%;
 
+      font-size: 0.8rem;
+
       border: 1px solid #b55ddf;
       border-radius: 0.625rem;
       background: #fff;
@@ -112,6 +114,7 @@ const emit = defineEmits(["trip-picked"]);
 
       display: flex;
       justify-content: space-between;
+      gap: 1rem;
 
       padding: 0.8rem;
 
@@ -133,7 +136,7 @@ const emit = defineEmits(["trip-picked"]);
     }
   }
   &--expanded {
-    height: 37%;
+    height: 40%;
   }
 
   &__expander {

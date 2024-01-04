@@ -4,11 +4,13 @@ import Button from "primevue/button";
 import OverlayPanel from "primevue/overlaypanel";
 import { TheParametersPicker } from ".";
 import { onMounted, ref } from "vue";
+import { fetchGeocodingResults } from "../api/getElement";
 
 const props = defineProps<{ currentTrip: any }>();
 
 const from = ref("");
 const to = ref("");
+const filteredCities = ref();
 const newStop = ref("");
 
 const createLoop = () => {
@@ -23,23 +25,22 @@ onMounted(() => {
   checkIfBothSelected();
 });
 
-const cities = ["Gliwice", "Mikołów", "Mikołajki", "Katowice", "Warszawa"];
-const filteredCities = ref();
-
 const emit = defineEmits(["destination-chosen", "destination-not-chosen"]);
 
 const isParamPickerVisible = ref(false);
 
-const search = (event: any) => {
-  setTimeout(() => {
-    if (!event.query.trim().length) {
-      filteredCities.value = [...cities];
-    } else {
-      filteredCities.value = cities.filter((city) => {
-        return city.toLowerCase().startsWith(event.query.toLowerCase());
-      });
-    }
-  }, 250);
+const search = async (event: any) => {
+  const propositions = 10;
+  const data = await fetchGeocodingResults(event.query, "name", propositions);
+  filteredCities.value = data.map(
+    (item: any) => `${item.properties.name}, ${item.properties.near}`
+  );
+};
+
+const overlayPanelComponent = ref();
+
+const toggle = (event: any) => {
+  overlayPanelComponent.value.toggle(event);
 };
 
 const checkIfBothSelected = () => {
@@ -57,12 +58,6 @@ const checkIfAnyIsNull = () => {
     emit("destination-not-chosen");
     isParamPickerVisible.value = false;
   }
-};
-
-const overlayPanelComponent = ref();
-
-const toggle = (event: any) => {
-  overlayPanelComponent.value.toggle(event);
 };
 </script>
 
@@ -163,6 +158,8 @@ const toggle = (event: any) => {
     top: 50%;
     transform: translateY(-50%);
     right: 0.5rem;
+
+    background-color: white;
     cursor: pointer;
     &:hover {
       animation: spin 1s ease-in-out infinite forwards;
