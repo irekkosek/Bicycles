@@ -1,13 +1,6 @@
 import { ref } from "vue";
 import { ConfigEnv } from "./env.config";
 
-export type ItineraryPoint = {
-    lat: number;
-    lon: number;
-    name: string; //can 
-};
-
-
 const itineraryPointToString = (itineraryPoint: ItineraryPoint) => {
     let itineraryPointString = "";
     //loop through itinerary points and add to string if name is empty omit it
@@ -34,14 +27,7 @@ export const fetchCircularRouteCSM = async (itineraryPoint: ItineraryPoint, dura
     const data = await response.json();
     return data;
 }
-
-export const testRouteCSM = async () => {
-    const itineraryPoints: ItineraryPoint =
-    {
-        lat: 52.20530,
-        lon: 0.11795,
-        name: "City Centre"
-    };
+export const testRouteCSM = async (itineraryPoints: ItineraryPoint) => {
     const distance = 1000;
     const duration = -1;
     const data = await fetchCircularRouteCSM(itineraryPoints,duration, distance);

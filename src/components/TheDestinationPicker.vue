@@ -9,6 +9,12 @@ const from = ref("");
 const to = ref("");
 const filteredCities = ref();
 
+export type ItineraryPoint = {
+    lat: number;
+    lon: number;
+    name: string; //can 
+};
+
 const createLoop = () => {
   to.value = from.value;
 };
@@ -23,8 +29,13 @@ watchEffect(() => {
     isParamPickerVisible.value = false;
   }
 });
-
-testRouteCSM();
+const itineraryPoint: ItineraryPoint =
+    {
+        lat: 52.20530,
+        lon: 0.11795,
+        name: "City Centre"
+    };
+testRouteCSM(itineraryPoint);
 
 const search = async (event: any) => {
 const propositions = 10
