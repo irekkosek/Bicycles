@@ -2,13 +2,26 @@
 import AutoComplete from "primevue/autocomplete";
 import { TheParametersPicker } from ".";
 import {fetchGeocodingResults} from "../api/getElement"
+<<<<<<< Updated upstream
 import {testRouteCSM} from "../api/getCircularRoute"
+=======
+import {fetchCycleRouting} from "../api/getCycleRouting"
+>>>>>>> Stashed changes
 import { ref, watchEffect } from "vue";
+import console from "console";
 
 const from = ref("");
 const to = ref("");
+<<<<<<< Updated upstream
 const filteredCities = ref();
+=======
+>>>>>>> Stashed changes
 
+const filteredCities = ref();
+const test = async () => {
+  const x = await fetchCycleRouting("-0.14009,51.50202,Buckingham+Palace", -1,100);
+  console.log(x);
+}
 
 const createLoop = () => {
   to.value = from.value;
@@ -49,7 +62,7 @@ const data = await fetchGeocodingResults(event.query,"name",propositions)
           v-if="from && from.length"
           src="../assets/loop.svg"
           class="loop-icon"
-          @click="createLoop"
+          @click="test"
         />
       </transition>
     </span>
