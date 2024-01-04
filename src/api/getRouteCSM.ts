@@ -1,4 +1,3 @@
-import exp from "constants";
 import { ConfigEnv } from "./env.config";
 import L from "leaflet";
 
@@ -46,7 +45,13 @@ const itineraryPointsToString = (itineraryPoints: ItineraryPoint[]) => {
     });
     return itineraryPointsString.slice(0, -1);
 }
-
+/**
+ * 
+ * @param itineraryPoints 
+ * @param plan 
+ * @returns Return values, in detail https://www.cyclestreets.net/api/v1/journey/#jpReturn
+ * 
+ */
 export const fetchRouteCSM = async (itineraryPoints: ItineraryPoint[], plan: planType) => {
     const url = `https://www.cyclestreets.net/api/journey.json?key=${ConfigEnv.apiKey}&reporterrors=1&itinerarypoints=${itineraryPointsToString(itineraryPoints)}&plan=${plan}`;
     const response = await fetch(url);
@@ -54,7 +59,7 @@ export const fetchRouteCSM = async (itineraryPoints: ItineraryPoint[], plan: pla
     return data;
 }
 
-export const testRoute = async () => {
+export const testRouteCSM = async () => {
     const itineraryPoints: ItineraryPoint[] = [
         {
             lat: 52.20530,
@@ -74,10 +79,10 @@ export const testRoute = async () => {
     ];
     const plan = planType.balanced;
     const data = await fetchRouteCSM(itineraryPoints, plan);
-    data.waypoint.forEach((waypoint) => {
-        L.marker((waypoint["@attributes"].latitude, waypoint["@attributes"].longitude)).addTo(map);
-        console.log(L.marker((waypoint["@attributes"].longitude, waypoint["@attributes"].latitude)))
-      })
-      console.log(map)
+    console.log(data)
+    console.log("L.marker((waypoint['@attributes'].longitude, waypoint['@attributes'].latitude)):")
+    data.waypoint.forEach((waypoint: any) => {
+            console.log(L.marker((waypoint["@attributes"].longitude, waypoint["@attributes"].latitude)))
+        })
     return data;
 };
