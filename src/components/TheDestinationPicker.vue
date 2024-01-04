@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import AutoComplete from "primevue/autocomplete";
 import { TheParametersPicker } from ".";
-import {fetchElement} from "../api/getElement"
+import {fetchGeocodingResults} from "../api/getElement"
+import {testRouteCSM} from "../api/getCircularRoute"
 import { ref, watchEffect } from "vue";
 
 const from = ref("");
 const to = ref("");
-const cities = ["Gliwice", "Mikołów"];
 const filteredCities = ref();
 
 
@@ -24,9 +24,12 @@ watchEffect(() => {
     isParamPickerVisible.value = false;
   }
 });
+
+testRouteCSM();
+
 const search = async (event: any) => {
 const propositions = 10
-const data = await fetchElement(event.query,"name",propositions)
+const data = await fetchGeocodingResults(event.query,"name",propositions)
   filteredCities.value = data.map(item => `${item.properties.name}, ${item.properties.near}`);
 };
 </script>
