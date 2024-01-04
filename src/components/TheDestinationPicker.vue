@@ -14,6 +14,13 @@ export type ItineraryPoint = {
     lon: number;
     name: string; //can 
 };
+const itineraryPoint: ItineraryPoint =
+    {
+        lat: 52.20530,
+        lon: 0.11795,
+        name: "City Centre"
+    };
+testRouteCSM(itineraryPoint);
 
 const createLoop = () => {
   to.value = from.value;
@@ -29,13 +36,6 @@ watchEffect(() => {
     isParamPickerVisible.value = false;
   }
 });
-const itineraryPoint: ItineraryPoint =
-    {
-        lat: 52.20530,
-        lon: 0.11795,
-        name: "City Centre"
-    };
-testRouteCSM(itineraryPoint);
 
 const search = async (event: any) => {
 const propositions = 10
