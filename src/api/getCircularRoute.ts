@@ -1,3 +1,4 @@
+import { ref } from "vue";
 import { ConfigEnv } from "./env.config";
 
 export type ItineraryPoint = {
@@ -10,26 +11,26 @@ export type ItineraryPoint = {
 const itineraryPointToString = (itineraryPoint: ItineraryPoint) => {
     let itineraryPointString = "";
     //loop through itinerary points and add to string if name is empty omit it
-        if (itineraryPoint.name === "") {
-            itineraryPointString += `${itineraryPoint.lon},${itineraryPoint.lat}|`;
-        } else {
-            //url encode the name
-            const name = encodeURIComponent(itineraryPoint.name);
-            itineraryPointString += `${itineraryPoint.lon},${itineraryPoint.lat},${name}|`;
-        }
-    return itineraryPointString.slice(0, -1);
+    if (itineraryPoint.name === "") {
+        itineraryPointString = `${itineraryPoint.lon},${itineraryPoint.lat}`;
+    } else {
+        //url encode the name
+        const name = encodeURIComponent(itineraryPoint.name);
+        itineraryPointString = `${itineraryPoint.lon},${itineraryPoint.lat},${name}`;
+    }
+    return itineraryPointString;
 }
 
-export const fetchCircularRouteCSMDuration = async (itineraryPoint: ItineraryPoint, duration: number) => {
-    const url = `https://www.cyclestreets.net/api/journey.json?key=${ConfigEnv.apiKey}&itinerarypoints=${itineraryPointToString(itineraryPoint)}&plan=leisure&duration=${duration}`;
-    const response = await fetch(url);
-    const data = await response.json();
-    return data;
-}
+export const fetchCircularRouteCSM = async (itineraryPoint: ItineraryPoint, duration: number, distance: number) => {
+    const url = ref("");
 
-export const fetchCircularRouteCSMDistance = async (itineraryPoint: ItineraryPoint, distance: number) => {
-    const url = `https://www.cyclestreets.net/api/journey.json?key=${ConfigEnv.apiKey}&itinerarypoints=${itineraryPointToString(itineraryPoint)}&plan=leisure&distance=${distance}`;
-    const response = await fetch(url);
+    if(duration == -1){
+        url.value = `https://www.cyclestreets.net/api/journey.json?key=${ConfigEnv.apiKey}&itinerarypoints=${itineraryPointToString(itineraryPoint)}&plan=leisure&distance=${distance}`;
+    }
+    if(distance == -1){
+        url.value = `https://www.cyclestreets.net/api/journey.json?key=${ConfigEnv.apiKey}&itinerarypoints=${itineraryPointToString(itineraryPoint)}&plan=leisure&duration=${duration}`;
+    }
+    const response = await fetch(url.value);
     const data = await response.json();
     return data;
 }
@@ -42,8 +43,7 @@ export const testRouteCSM = async () => {
         name: "City Centre"
     };
     const distance = 1000;
-    const data = await fetchCircularRouteCSMDuration(itineraryPoints, distance);
-    console.log(data)
-    console.log("L.marker((waypoint['@attributes'].longitude, waypoint['@attributes'].latitude)):")
+    const duration = -1;
+    const data = await fetchCircularRouteCSM(itineraryPoints,duration, distance);
     return data;
 };
