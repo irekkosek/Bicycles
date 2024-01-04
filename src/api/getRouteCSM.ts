@@ -1,5 +1,7 @@
 import exp from "constants";
 import { ConfigEnv } from "./env.config";
+import L from "leaflet";
+
 
 
 //example url https://www.cyclestreets.net/api/journey.json?key=registeredapikey&reporterrors=1&itinerarypoints=0.11795,52.20530,City+Centre|0.13140,52.22105,Mulberry+Close|0.14732,52.19965,Thoday+Street&plan=quietest
@@ -71,7 +73,7 @@ export const testRoute = async () => {
         }
     ];
     const plan = planType.balanced;
-    const data = await fetchRoute(itineraryPoints, plan);
+    const data = await fetchRouteCSM(itineraryPoints, plan);
     data.waypoint.forEach((waypoint) => {
         L.marker((waypoint["@attributes"].latitude, waypoint["@attributes"].longitude)).addTo(map);
         console.log(L.marker((waypoint["@attributes"].longitude, waypoint["@attributes"].latitude)))
