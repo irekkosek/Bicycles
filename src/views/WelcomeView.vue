@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { TheDestinationPicker, TheTripPicker } from "../components";
-import { LMap, LTileLayer } from "@vue-leaflet/vue-leaflet";
+import { LMap, LTileLayer, LMarker } from "@vue-leaflet/vue-leaflet";
+import { fetchElement } from "../api/getElement";
 
 const zoom = 15;
 
 const isTripPickerVisible = ref(false);
-
-
 </script>
 
 <template>

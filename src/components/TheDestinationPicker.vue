@@ -1,21 +1,32 @@
 <script setup lang="ts">
 import AutoComplete from "primevue/autocomplete";
 import { TheParametersPicker } from ".";
-import { ref, watchEffect } from "vue";
 import {fetchGeocodingResults} from "../api/getElement"
+import {testRouteCSM} from "../api/getCircularRoute"
+import { ref, watchEffect } from "vue";
 
 const from = ref("");
 const to = ref("");
 const filteredCities = ref();
 
+export type ItineraryPoint = {
+    lat: number;
+    lon: number;
+    name: string; //can 
+};
+const itineraryPoint: ItineraryPoint =
+    {
+        lat: 52.20530,
+        lon: 0.11795,
+        name: "City Centre"
+    };
+testRouteCSM(itineraryPoint);
+
 const createLoop = () => {
   to.value = from.value;
 };
-
 const emit = defineEmits(["destination-chosen", "destination-not-chosen"]);
-
 const isParamPickerVisible = ref(false);
-
 watchEffect(() => {
   if (from.value && to.value && from.value.length > 0 && to.value.length > 0) {
     emit("destination-chosen");
