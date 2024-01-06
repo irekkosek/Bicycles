@@ -6,13 +6,14 @@ import {
   TheTripInfo,
   TheTripSteps,
 } from "../components";
+import { LMap, LTileLayer, LGeoJson } from "@vue-leaflet/vue-leaflet";
 import {
-  LMap,
-  LTileLayer,
-  LMarker,
-  LTooltip,
-  LPopup,
-} from "@vue-leaflet/vue-leaflet";
+  ItineraryPoint,
+  fetchRouteMC,
+  formatTypeMC,
+  langType,
+  routeType,
+} from "../api";
 
 const props = defineProps<{ currentTrip?: any }>();
 const emit = defineEmits(["navigation-stopped"]);
@@ -24,6 +25,8 @@ const isTripPicked = ref(false);
 
 const chosenTrip = ref();
 const tripDestinations = ref({ from: "", to: "" });
+
+const geojson = ref(undefined);
 
 onMounted(() => {
   if (!props.currentTrip) return;
@@ -41,9 +44,38 @@ const stopNavigating = () => {
   emit("navigation-stopped");
 };
 
-const searchForTrips = (e: any) => {
+const searchForTrips = async (e: any) => {
   isTripPickerVisible.value = true;
   tripDestinations.value = e;
+  const itineraryPoints: ItineraryPoint[] = [
+    {
+      lat: 50.28864098522382,
+      lon: 18.67781622133728,
+      name: "Start",
+    },
+    {
+      lat: 50.29103321922287,
+      lon: 18.680361790311053,
+      name: "End",
+    },
+    {
+      lat: 50.29132578635057,
+      lon: 18.673654418094117,
+      name: "Waypoint",
+    },
+  ];
+  const route = routeType.bikeRoad;
+  const lang = langType.en;
+  const outputFormat = formatTypeMC.geojson;
+  const avoidToll = false;
+  const data = await fetchRouteMC(
+    itineraryPoints,
+    route,
+    lang,
+    outputFormat,
+    avoidToll
+  );
+  geojson.value = data.geometry;
 };
 
 const isRouteLiked = ref(false);
@@ -52,37 +84,6 @@ const addRouteToFav = () => {
   // save route to favourites (gpx file)
   isRouteLiked.value = !isRouteLiked.value;
 };
-
-const markers = ref([
-  {
-    id: "m1",
-    position: { lat: 50.205, lng: 18.6 },
-    tooltip: "tooltip for marker1",
-    draggable: true,
-    visible: true,
-  },
-  {
-    id: "m2",
-    position: { lat: 50.2505, lng: 18.6 },
-    tooltip: "tooltip for marker2",
-    draggable: true,
-    visible: true,
-  },
-  {
-    id: "m3",
-    position: { lat: 50.235, lng: 18.6 },
-    tooltip: "tooltip for marker3",
-    draggable: true,
-    visible: true,
-  },
-  {
-    id: "m4",
-    position: { lat: 50.265, lng: 18.6 },
-    tooltip: "tooltip for marker4",
-    draggable: true,
-    visible: true,
-  },
-]);
 </script>
 
 <template>
@@ -112,16 +113,10 @@ const markers = ref([
         layer-type="base"
         name="OpenStreetMap"
       ></l-tile-layer>
-      <l-marker
-        v-for="marker in markers"
-        :key="marker.id"
-        :visible="marker.visible"
-        :draggable="marker.draggable"
-        :lat-lng.sync="marker.position"
-      >
-        <l-popup :content="marker.tooltip" />
-        <l-tooltip :content="marker.tooltip" />
-      </l-marker>
+      <l-geo-json
+        :geojson="geojson"
+        :options="{ style: { color: '#ff7800', weight: 5, opacity: 0.65 } }"
+      />
     </l-map>
   </div>
   <div v-if="isTripPicked" class="action-buttons">
