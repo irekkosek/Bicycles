@@ -6,14 +6,14 @@ import {
   TheTripInfo,
   TheTripSteps,
 } from "../components";
-import { LMap, LTileLayer, LGeoJson } from "@vue-leaflet/vue-leaflet";
 import {
-  ItineraryPoint,
-  fetchRouteMC,
-  formatTypeMC,
-  langType,
-  routeType,
-} from "../api";
+  LMap,
+  LTileLayer,
+  LGeoJson,
+  LMarker,
+  LIcon,
+} from "@vue-leaflet/vue-leaflet";
+import { fetchRouteMC, formatTypeMC, langType, routeType } from "../api";
 
 const props = defineProps<{ currentTrip?: any }>();
 const emit = defineEmits(["navigation-stopped"]);
@@ -24,7 +24,7 @@ const isTripPickerVisible = ref(false);
 const isTripPicked = ref(false);
 
 const chosenTrip = ref();
-const tripDestinations = ref({ from: "", to: "" });
+const tripDestinations = ref();
 
 const geojson = ref(undefined);
 
@@ -47,29 +47,14 @@ const stopNavigating = () => {
 const searchForTrips = async (e: any) => {
   isTripPickerVisible.value = true;
   tripDestinations.value = e;
-  const itineraryPoints: ItineraryPoint[] = [
-    {
-      lat: 50.28864098522382,
-      lon: 18.67781622133728,
-      name: "Start",
-    },
-    {
-      lat: 50.29103321922287,
-      lon: 18.680361790311053,
-      name: "End",
-    },
-    {
-      lat: 50.29132578635057,
-      lon: 18.673654418094117,
-      name: "Waypoint",
-    },
-  ];
+  console.log(tripDestinations.value);
+
   const route = routeType.bikeRoad;
   const lang = langType.en;
   const outputFormat = formatTypeMC.geojson;
   const avoidToll = false;
   const data = await fetchRouteMC(
-    itineraryPoints,
+    tripDestinations.value,
     route,
     lang,
     outputFormat,
@@ -90,8 +75,12 @@ const addRouteToFav = () => {
   <TheDestinationPicker
     v-if="!isTripPicked"
     @destination-chosen="searchForTrips"
-    @destination-not-chosen="isTripPickerVisible = false"
-    :current-trip="chosenTrip"
+    @destination-not-chosen="
+      () => {
+        isTripPickerVisible = false;
+        geojson = undefined;
+      }
+    "
   />
   <Transition name="fade-in">
     <TheTripInfo
@@ -114,9 +103,28 @@ const addRouteToFav = () => {
         name="OpenStreetMap"
       ></l-tile-layer>
       <l-geo-json
+        v-if="geojson"
         :geojson="geojson"
         :options="{ style: { color: '#ff7800', weight: 5, opacity: 0.65 } }"
       />
+      <l-marker
+        v-for="dest in tripDestinations ?? []"
+        :lat-lng="[dest.lat, dest.lon]"
+        :visible="geojson !== undefined"
+      >
+        <l-icon
+          :icon-url="
+            dest.name === 'Start'
+              ? 'src/assets/map-marker-blue.svg'
+              : dest.name === 'End'
+              ? 'src/assets/map-marker-red.svg'
+              : 'src/assets/map-marker-violet.svg'
+          "
+          :iconSize="[32, 37]"
+          :iconAnchor="[16, 37]"
+        >
+        </l-icon
+      ></l-marker>
     </l-map>
   </div>
   <div v-if="isTripPicked" class="action-buttons">

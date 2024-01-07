@@ -3,61 +3,74 @@ import AutoComplete from "primevue/autocomplete";
 import Button from "primevue/button";
 import OverlayPanel from "primevue/overlaypanel";
 import { TheParametersPicker } from ".";
-import { onMounted, ref } from "vue";
+import { ref, watchEffect } from "vue";
 import { fetchGeocodingResults } from "../api/getElement";
 
-const props = defineProps<{ currentTrip: any }>();
+// const props = defineProps<{ currentTrip: any }>();
 
-const from = ref("");
-const to = ref("");
 const filteredCities = ref();
-const newStop = ref("");
+const stops = ref([]);
+
+const routeObject = ref([
+  {
+    name: "Start",
+    pointName: "",
+    lat: 0,
+    lon: 0,
+  },
+  {
+    name: "End",
+    pointName: "",
+    lat: 0,
+    lon: 0,
+  },
+]);
 
 const createLoop = () => {
-  to.value = from.value;
-  checkIfBothSelected();
+  routeObject.value[1] = { ...routeObject.value[0], name: "End" };
 };
-
-onMounted(() => {
-  if (!props.currentTrip) return;
-  from.value = props.currentTrip.from ?? "";
-  to.value = props.currentTrip.to ?? "";
-  checkIfBothSelected();
-});
 
 const emit = defineEmits(["destination-chosen", "destination-not-chosen"]);
 
 const isParamPickerVisible = ref(false);
 
-const search = async (event: any) => {
-  const propositions = 10;
+const search = async (event: any, what: string) => {
+  const propositions = 5;
   const data = await fetchGeocodingResults(event.query, "name", propositions);
-  filteredCities.value = data.map(
-    (item: any) => `${item.properties.name}, ${item.properties.near}`
-  );
+
+  filteredCities.value = data.map((element: any) => ({
+    name: what,
+    pointName: element.properties.name,
+    lat: element.geometry.coordinates[1],
+    lon: element.geometry.coordinates[0],
+  }));
 };
+
+watchEffect(() => {
+  if (
+    !routeObject.value[0] ||
+    !routeObject.value[1] ||
+    !routeObject.value[0].pointName ||
+    !routeObject.value[1].pointName
+  ) {
+    emit("destination-not-chosen");
+    isParamPickerVisible.value = false;
+    return;
+  } else {
+    const combined = [
+      routeObject.value[0],
+      ...stops.value,
+      routeObject.value[1],
+    ];
+    emit("destination-chosen", combined);
+    isParamPickerVisible.value = true;
+  }
+});
 
 const overlayPanelComponent = ref();
 
 const toggle = (event: any) => {
   overlayPanelComponent.value.toggle(event);
-};
-
-const checkIfBothSelected = () => {
-  if (from.value && to.value && from.value.length > 0 && to.value.length > 0) {
-    emit("destination-chosen", { from: from.value, to: to.value });
-    isParamPickerVisible.value = true;
-  } else {
-    emit("destination-not-chosen");
-    isParamPickerVisible.value = false;
-  }
-};
-
-const checkIfAnyIsNull = () => {
-  if (!from.value || !to.value) {
-    emit("destination-not-chosen");
-    isParamPickerVisible.value = false;
-  }
 };
 </script>
 
@@ -66,26 +79,28 @@ const checkIfAnyIsNull = () => {
     <div class="flex-row">
       <span class="from-picker">
         <AutoComplete
-          v-model="from"
+          v-model="routeObject[0]"
           placeholder="Skąd?"
           :suggestions="filteredCities"
-          @complete="search"
-          @item-select="checkIfBothSelected"
-          @change="checkIfAnyIsNull"
           forceSelection
           :delay="100"
+          @complete="($event) => search($event, 'Start')"
+          optionLabel="pointName"
         />
         <transition name="bounce">
-          <img
-            v-if="from && from.length"
-            src="../assets/loop.svg"
-            class="loop-icon"
-            @click="createLoop"
-          />
+          <img src="../assets/loop.svg" class="loop-icon" @click="createLoop" />
         </transition>
       </span>
 
-      <div class="add-stop">
+      <div
+        v-if="
+          routeObject[0] &&
+            routeObject[1] &&
+            routeObject[0].pointName &&
+            routeObject[1].pointName
+        "
+        class="add-stop"
+      >
         <Button
           class="add-stop__button"
           icon="pi pi-plus"
@@ -95,10 +110,12 @@ const checkIfAnyIsNull = () => {
         />
         <OverlayPanel ref="overlayPanelComponent">
           <AutoComplete
-            v-model="newStop"
+            v-if="isParamPickerVisible"
+            v-model="stops"
             placeholder="Dodaj przystanek"
             :suggestions="filteredCities"
-            @complete="search"
+            @complete="($event) => search($event, 'Waypoint')"
+            optionLabel="pointName"
             forceSelection
             multiple
             :delay="100"
@@ -108,12 +125,11 @@ const checkIfAnyIsNull = () => {
     </div>
 
     <AutoComplete
-      v-model="to"
+      v-model="routeObject[1]"
       placeholder="Dokąd?"
       :suggestions="filteredCities"
-      @complete="search"
-      @item-select="checkIfBothSelected"
-      @change="checkIfAnyIsNull"
+      @complete="($event) => search($event, 'End')"
+      optionLabel="pointName"
       forceSelection
       :delay="100"
     />
