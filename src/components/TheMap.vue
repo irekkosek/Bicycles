@@ -13,7 +13,7 @@ import {
   LMarker,
   LIcon,
 } from "@vue-leaflet/vue-leaflet";
-import { fetchRouteMC, formatTypeMC, langType, routeType } from "../api";
+import { fetchRouteMC, formatTypeMC, langType, routeType, fetchNearestPoint } from "../api";
 
 const props = defineProps<{ currentTrip?: any }>();
 const emit = defineEmits(["navigation-stopped"]);
@@ -25,7 +25,6 @@ const isTripPicked = ref(false);
 
 const chosenTrip = ref();
 const tripDestinations = ref();
-
 const geojson = ref(undefined);
 
 onMounted(() => {
@@ -69,6 +68,16 @@ const addRouteToFav = () => {
   // save route to favourites (gpx file)
   isRouteLiked.value = !isRouteLiked.value;
 };
+
+const mapClicked = async (event: LMap.LeafletMouseEvent) =>{
+  try {
+    const latLng = event.latlng;
+    const result = await fetchNearestPoint(latLng.lng, latLng.lat);
+    TheDestinationPicker.routeObject.value[0] = result;
+  } catch (error) {
+    console.error('Błąd podczas pobierania najbliższego punktu:', error);
+  }
+}
 </script>
 
 <template>
@@ -96,6 +105,7 @@ const addRouteToFav = () => {
       v-model:zoom="zoom"
       :options="{ zoomControl: false }"
       :center="[50.29117904070245, 18.680356029431803]"
+      @contextmenu="mapClicked"
     >
       <l-tile-layer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
