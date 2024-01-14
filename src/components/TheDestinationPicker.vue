@@ -36,7 +36,7 @@ const isParamPickerVisible = ref(false);
 
 const search = async (event: any, what: string) => {
   const propositions = 5;
-  const data = await fetchGeocodingResults(event.query, "name", propositions);
+  const data = await fetchGeocodingResults(event.query, "near,name", propositions);
 
   filteredCities.value = data.map((element: any) => ({
     name: what,
