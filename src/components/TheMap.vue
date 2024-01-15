@@ -27,6 +27,14 @@ const chosenTrip = ref();
 const tripDestinations = ref();
 const geojson = ref(undefined);
 
+const waypoint = ref({
+  name:"Waypoint",
+  pointName: "",
+  lat:0,
+  lon:0,
+});
+
+const stops = ref(  []);
 onMounted(() => {
   if (!props.currentTrip) return;
   chosenTrip.value = props.currentTrip;
@@ -73,7 +81,10 @@ const mapClicked = async (event: LMap.LeafletMouseEvent) =>{
   try {
     const latLng = event.latlng;
     const result = await fetchNearestPoint(latLng.lng, latLng.lat);
-    TheDestinationPicker.routeObject.value[0] = result;
+    waypoint.value.pointName = result.features[0].properties.name;
+    waypoint.value.lat = result.features[0].geometry.coordinates[1];
+    waypoint.value.lon = result.features[0].geometry.coordinates[0];
+    console.log(waypoint.value);
   } catch (error) {
     console.error('Błąd podczas pobierania najbliższego punktu:', error);
   }
@@ -83,6 +94,7 @@ const mapClicked = async (event: LMap.LeafletMouseEvent) =>{
 <template>
   <TheDestinationPicker
     v-if="!isTripPicked"
+    :waypoints="stops"
     @destination-chosen="searchForTrips"
     @destination-not-chosen="
       () => {
