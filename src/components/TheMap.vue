@@ -13,7 +13,9 @@ import {
   LMarker,
   LIcon,
 } from "@vue-leaflet/vue-leaflet";
-import { fetchRouteMC, formatTypeMC, langType, routeType } from "../api";
+import ProgressSpinner from "primevue/progressspinner";
+
+import { fetchLoopRouteCSM, fetchRouteMC } from "../api";
 
 const props = defineProps<{ currentTrip?: any }>();
 const emit = defineEmits(["navigation-stopped"]);
@@ -44,22 +46,32 @@ const stopNavigating = () => {
   emit("navigation-stopped");
 };
 
-const searchForTrips = async (e: any) => {
-  isTripPickerVisible.value = true;
-  tripDestinations.value = e;
-  console.log(tripDestinations.value);
+const isLoaderVisible = ref(false);
 
-  const route = routeType.bikeRoad;
-  const lang = langType.en;
-  const outputFormat = formatTypeMC.geojson;
-  const avoidToll = false;
-  const data = await fetchRouteMC(
-    tripDestinations.value,
-    route,
-    lang,
-    outputFormat,
-    avoidToll
-  );
+const searchForTrips = async (destinations: any[], params: any[]) => {
+  isTripPickerVisible.value = true;
+  tripDestinations.value = destinations;
+  const mappedParams = params
+    .map((param) => {
+      return `${param.type}=${param.value}`;
+    })
+    .join("&");
+
+  let data;
+  if (
+    tripDestinations.value.length === 2 &&
+    tripDestinations.value[0].pointName === tripDestinations.value[1].pointName
+  ) {
+    const pointForLooping = tripDestinations.value[0];
+    isLoaderVisible.value = true;
+    data = await fetchLoopRouteCSM(
+      `${pointForLooping.lon},${pointForLooping.lat}`,
+      mappedParams
+    );
+    isLoaderVisible.value = false;
+  } else {
+    data = await fetchRouteMC(tripDestinations.value);
+  }
   geojson.value = data.geometry;
 };
 
@@ -74,7 +86,7 @@ const addRouteToFav = () => {
 <template>
   <TheDestinationPicker
     v-if="!isTripPicked"
-    @destination-chosen="searchForTrips"
+    @destination-chosen="($event1, $event2) => searchForTrips($event1, $event2)"
     @destination-not-chosen="
       () => {
         isTripPickerVisible = false;
@@ -150,9 +162,27 @@ const addRouteToFav = () => {
   <Transition name="slide-down">
     <TheTripSteps v-if="isTripPicked" />
   </Transition>
+  <div v-if="isLoaderVisible" class="overlay">
+    <ProgressSpinner
+      v-if="isTripPickerVisible && !isTripPicked"
+      class="overlay__spinner"
+    />
+  </div>
 </template>
 
 <style lang="scss" scoped>
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  height: 100vh;
+  width: 100vw;
+  background-color: rgba(255, 255, 255, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 .map {
   height: 100vh;
   width: 100vw;
