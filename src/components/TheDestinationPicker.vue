@@ -6,8 +6,6 @@ import { TheParametersPicker } from ".";
 import { ref, watchEffect } from "vue";
 import { fetchGeocodingResults } from "../api/getElement";
 
-// const props = defineProps<{ currentTrip: any }>();
-
 const filteredCities = ref();
 const stops = ref([]);
 
@@ -57,15 +55,14 @@ watchEffect(() => {
     isParamPickerVisible.value = false;
     return;
   } else {
-    const combined = [
-      routeObject.value[0],
-      ...stops.value,
-      routeObject.value[1],
-    ];
-    emit("destination-chosen", combined);
     isParamPickerVisible.value = true;
   }
 });
+
+const mapAndSendParameters = (parameters: any) => {
+  const combined = [routeObject.value[0], ...stops.value, routeObject.value[1]];
+  emit("destination-chosen", combined, parameters);
+};
 
 const overlayPanelComponent = ref();
 
@@ -136,7 +133,10 @@ const toggle = (event: any) => {
   </div>
 
   <Transition name="slide-up">
-    <TheParametersPicker v-if="isParamPickerVisible" />
+    <TheParametersPicker
+      v-if="isParamPickerVisible"
+      @parameters-chosen="mapAndSendParameters"
+    />
   </Transition>
 </template>
 

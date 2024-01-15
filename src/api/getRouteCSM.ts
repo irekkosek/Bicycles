@@ -1,8 +1,6 @@
 import { ConfigEnv } from "./env.config";
 import L from "leaflet";
 
-
-
 //example url https://www.cyclestreets.net/api/journey.json?key=registeredapikey&reporterrors=1&itinerarypoints=0.11795,52.20530,City+Centre|0.13140,52.22105,Mulberry+Close|0.14732,52.19965,Thoday+Street&plan=quietest
 
 // itinerarypoints - String of waypoints: longitude,latitude|… or longitude,latitude,name|…
@@ -11,9 +9,9 @@ import L from "leaflet";
 
 //new type for itinerary points
 export type ItineraryPoint = {
-    lat: number;
-    lon: number;
-    name: string; //can 
+  lat: number;
+  lon: number;
+  name: string; //can
 };
 
 // plan string
@@ -24,65 +22,114 @@ export type ItineraryPoint = {
 // shortest: In general we do not recommend including this in your interface unless you have a need for it, as this will not give particularly practical routes. These will be literally the shortest route, with only land ownership rights causing any deviation from this. It will suggest, for instance, dismounting and walking down the opposite direction of a one-way street, and will gladly route over the top of a hill when that is the shortest distance.
 
 export enum planType {
-    balanced = "balanced",
-    fastest = "fastest",
-    quietest = "quietest",
-    shortest = "shortest"
+  balanced = "balanced",
+  fastest = "fastest",
+  quietest = "quietest",
+  shortest = "shortest",
+  leisure = "leisure",
 }
 
 //function to convert itinerary points to string
 const itineraryPointsToString = (itineraryPoints: ItineraryPoint[]) => {
-    let itineraryPointsString = "";
-    //loop through itinerary points and add to string if name is empty omit it
-    itineraryPoints.forEach((point) => {
-        if (point.name === "") {
-            itineraryPointsString += `${point.lon},${point.lat}|`;
-        } else {
-            //url encode the name
-            const name = encodeURIComponent(point.name);
-            itineraryPointsString += `${point.lon},${point.lat},${name}|`;
-        }
-    });
-    return itineraryPointsString.slice(0, -1);
-}
+  let itineraryPointsString = "";
+  //loop through itinerary points and add to string if name is empty omit it
+  itineraryPoints.forEach((point) => {
+    if (point.name === "") {
+      itineraryPointsString += `${point.lon},${point.lat}|`;
+    } else {
+      //url encode the name
+      const name = encodeURIComponent(point.name);
+      itineraryPointsString += `${point.lon},${point.lat},${name}|`;
+    }
+  });
+  return itineraryPointsString.slice(0, -1);
+};
 /**
- * 
- * @param itineraryPoints 
- * @param plan 
+ *
+ * @param itineraryPoints
+ * @param plan
  * @returns Return values, in detail https://www.cyclestreets.net/api/v1/journey/#jpReturn
- * 
+ *
  */
-export const fetchRouteCSM = async (itineraryPoints: ItineraryPoint[], plan: planType) => {
-    const url = `https://www.cyclestreets.net/api/journey.json?key=${ConfigEnv.apiKey}&reporterrors=1&itinerarypoints=${itineraryPointsToString(itineraryPoints)}&plan=${plan}`;
-    const response = await fetch(url);
-    const data = await response.json();
-    return data;
-}
+
+const convertToGeoJSON = (data: any) => {
+  const mappedData = data.marker[0]["@attributes"].coordinates
+    .split(" ")
+    .map((point: string) => {
+      const [lon, lat] = point.split(",");
+      return [parseFloat(lon), parseFloat(lat)];
+    });
+  const convertedToGeoJSON = {
+    geometry: {
+      type: "Feature",
+      geometry: {
+        type: "LineString",
+        coordinates: mappedData,
+      },
+      properties: {},
+    },
+  };
+
+  return convertedToGeoJSON;
+};
+
+export const fetchLoopRouteCSM = async (
+  itineraryPoint: string,
+  params: string
+) => {
+  const url = `https://www.cyclestreets.net/api/journey.json?key=${ConfigEnv.apiKey}&reporterrors=1&itinerarypoints=${itineraryPoint}&plan=leisure&${params}`;
+
+  const response = await fetch(url);
+  const data = await response.json();
+
+  return convertToGeoJSON(data);
+};
+
+export const fetchRouteCSM = async (
+  itineraryPoints: ItineraryPoint[],
+  plan: planType
+) => {
+  const url = `https://www.cyclestreets.net/api/journey.json?key=${
+    ConfigEnv.apiKey
+  }&reporterrors=1&itinerarypoints=${itineraryPointsToString(
+    itineraryPoints
+  )}&plan=${plan}`;
+  const response = await fetch(url);
+  const data = await response.json();
+
+  return data;
+};
 
 export const testRouteCSM = async () => {
-    const itineraryPoints: ItineraryPoint[] = [
-        {
-            lat: 52.20530,
-            lon: 0.11795,
-            name: "City Centre"
-        },
-        {
-            lat: 52.22105,
-            lon: 0.13140,
-            name: "Mulberry Close"
-        },
-        {
-            lat: 52.19965,
-            lon: 0.14732,
-            name: "Thoday Street"
-        }
-    ];
-    const plan = planType.balanced;
-    const data = await fetchRouteCSM(itineraryPoints, plan);
-    console.log(data)
-    console.log("L.marker((waypoint['@attributes'].longitude, waypoint['@attributes'].latitude)):")
-    data.waypoint.forEach((waypoint: any) => {
-            console.log(L.marker((waypoint["@attributes"].longitude, waypoint["@attributes"].latitude)))
-        })
-    return data;
+  const itineraryPoints: ItineraryPoint[] = [
+    {
+      lat: 52.2053,
+      lon: 0.11795,
+      name: "City Centre",
+    },
+    {
+      lat: 52.22105,
+      lon: 0.1314,
+      name: "Mulberry Close",
+    },
+    {
+      lat: 52.19965,
+      lon: 0.14732,
+      name: "Thoday Street",
+    },
+  ];
+  const plan = planType.balanced;
+  const data = await fetchRouteCSM(itineraryPoints, plan);
+  console.log(data);
+  console.log(
+    "L.marker((waypoint['@attributes'].longitude, waypoint['@attributes'].latitude)):"
+  );
+  data.waypoint.forEach((waypoint: any) => {
+    console.log(
+      L.marker(
+        (waypoint["@attributes"].longitude, waypoint["@attributes"].latitude)
+      )
+    );
+  });
+  return data;
 };
