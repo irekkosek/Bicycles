@@ -10,7 +10,6 @@ import { fetchGeocodingResults } from "../api/getElement";
 
 const filteredCities = ref();
 const stops = ref([]);
-
 const routeObject = ref([
   {
     name: "Start",
