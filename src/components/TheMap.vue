@@ -86,7 +86,7 @@ const addRouteToFav = () => {
 <template>
   <TheDestinationPicker
     v-if="!isTripPicked"
-    @destination-chosen="($event1, $event2) => searchForTrips($event1, $event2)"
+    @destination-chosen="($event1: any[], $event2: any[]) => searchForTrips($event1, $event2)"
     @destination-not-chosen="
       () => {
         isTripPickerVisible = false;
