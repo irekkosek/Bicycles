@@ -1,54 +1,28 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from "vue";
+import { computed, ref } from "vue";
 
-const props = defineProps<{ tripDestinations: { from: string; to: string } }>();
+const props = defineProps<{
+  typeOfTrip: string;
+  tripDestinations: {
+    geometry: {
+      coordinates: [number, number][];
+    };
+    properties: {
+      from: string;
+      to: string;
+    };
+  }[];
+}>();
 
 const isTripPickerExpanded = ref(false);
-const trips = ref();
-
-const getTrips = async () => {
-  // API call for future
-  // const response = await fetch(
-  //   `http://localhost:3000/trips?from=${props.tripDestinations.from}&to=${props.tripDestinations.to}`
-  // );
-  // const data = await response.json();
-  // trips.value = data;
-
-  trips.value = [
-    {
-      from: props.tripDestinations.from,
-      to: props.tripDestinations.to,
-      distance: "24.5km",
-      time: "2 h 23 min",
-      kcal: "243",
-    },
-    {
-      from: props.tripDestinations.from,
-      to: props.tripDestinations.to,
-      distance: "28.4km",
-      time: "2 h 23 min",
-      kcal: "243",
-    },
-    {
-      from: props.tripDestinations.from,
-      to: props.tripDestinations.to,
-      distance: "32.1km",
-      time: "2 h 23 min",
-      kcal: "243",
-    },
-  ];
-};
-
-onMounted(() => {
-  getTrips();
-});
-
-watch(
-  () => props.tripDestinations,
-  () => {
-    getTrips();
+const allTypes = computed(() => {
+  switch (props.typeOfTrip) {
+    case "loop":
+      return ["< 10", "10-20", "20-30", "30-40"];
+    case "normal":
+      return ["górski", "szosowy", "miejski", "kolarski"];
   }
-);
+});
 
 const emit = defineEmits(["trip-picked"]);
 </script>
@@ -71,13 +45,23 @@ const emit = defineEmits(["trip-picked"]);
 
     <div class="trip-picker__items">
       <div
-        v-for="({ from, to, distance, time, kcal }, index) in trips"
+        v-for="({ properties }, index) in props.tripDestinations"
         :key="index"
         class="trip-item"
-        @click="emit('trip-picked', { from, to, distance, time, kcal, index })"
+        @click="
+          () => {
+            emit('trip-picked', index);
+            isTripPickerExpanded = false;
+          }
+        "
       >
-        <div class="trip-item__name">{{ from }} - {{ to }}</div>
-        <div class="trip-item__distance">{{ distance }}</div>
+        <div class="trip-item__name">
+          {{ properties.from }} - {{ properties.to }}
+        </div>
+        <div v-if="allTypes" class="trip-item__distance">
+          {{ typeOfTrip === "normal" ? "Rower" : "" }} {{ allTypes[index] }}
+          {{ typeOfTrip === "loop" ? "km" : "" }}
+        </div>
       </div>
     </div>
   </div>
@@ -86,6 +70,7 @@ const emit = defineEmits(["trip-picked"]);
 .trip-picker {
   position: absolute;
   bottom: 0px;
+  z-index: 3;
 
   box-shadow: 0px -4px 4px 0px rgba(0, 0, 0, 0.08);
 

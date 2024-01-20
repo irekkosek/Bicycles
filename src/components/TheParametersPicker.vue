@@ -6,52 +6,52 @@ import SelectButton from "primevue/selectbutton";
 const isParamPickerExpanded = ref(false);
 
 const items = ref([
-  {
-    name: "Typ rowera",
+  // {
+  //   name: "Typ rowera",
 
-    props: [
-      { value: "balanced", name: "Górski", type: "planType" },
-      { value: "quietest", name: "Miejski", type: "planType" },
-      { value: "fastest", name: "Szosowy", type: "planType" },
-    ],
-  },
-  {
-    name: "Cel wycieczki",
+  //   props: [
+  //     { value: "fastest", name: "Górski", type: "planType" },
+  //     { value: "quietest", name: "Miejski", type: "planType" },
+  //     { value: "balanced", name: "Szosowy", type: "planType" },
+  //   ],
+  // },
+  // {
+  //   name: "Cel wycieczki",
 
-    props: [
-      {
-        value: "attractions,castles,museums,ruins",
-        name: "Zwiedzanie",
-        type: "poiTypes",
-      },
-      {
-        value: "viewpoiTypesnts,parkandridesites",
-        name: "Góry",
-        type: "poiTypes",
-      },
-      {
-        value: "supermarkets,cinemas,libraries",
-        name: "Wycieczka po mieście",
-        type: "poiTypes",
-      },
-      {
-        value: "pubs,restaurants,cafes",
-        name: "Gastronomia",
-        type: "poiTypes",
-      },
-    ],
-  },
-  {
-    name: "Czas podróży",
+  //   props: [
+  //     {
+  //       value: "attractions,castles,museums,ruins",
+  //       name: "Zwiedzanie",
+  //       type: "poiTypes",
+  //     },
+  //     {
+  //       value: "viewpoiTypesnts,parkandridesites",
+  //       name: "Góry",
+  //       type: "poiTypes",
+  //     },
+  //     {
+  //       value: "supermarkets,cinemas,libraries",
+  //       name: "Wycieczka po mieście",
+  //       type: "poiTypes",
+  //     },
+  //     {
+  //       value: "pubs,restaurants,cafes",
+  //       name: "Gastronomia",
+  //       type: "poiTypes",
+  //     },
+  //   ],
+  // },
+  // {
+  //   name: "Czas podróży",
 
-    props: [
-      { value: "1800", name: "< 1h", type: "duration" },
-      { value: "5400", name: "1-2h", type: "duration" },
-      { value: "9000", name: "3-4h", type: "duration" },
-      { value: "12600", name: "5-6h", type: "duration" },
-      { value: "16200", name: "> 8h", type: "duration" },
-    ],
-  },
+  //   props: [
+  //     { value: "1800", name: "< 1h", type: "duration" },
+  //     { value: "5400", name: "1-2h", type: "duration" },
+  //     { value: "9000", name: "3-4h", type: "duration" },
+  //     { value: "12600", name: "5-6h", type: "duration" },
+  //     { value: "16200", name: "> 8h", type: "duration" },
+  //   ],
+  // },
   {
     name: "Dystans",
 

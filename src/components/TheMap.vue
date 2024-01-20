@@ -1,11 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
-import {
-  TheDestinationPicker,
-  TheTripPicker,
-  TheTripInfo,
-  TheTripSteps,
-} from "../components";
+import { TheDestinationPicker, TheTripInfo, TheTripSteps } from "../components";
 import {
   LMap,
   LTileLayer,
@@ -13,22 +8,28 @@ import {
   LMarker,
   LIcon,
 } from "@vue-leaflet/vue-leaflet";
-import ProgressSpinner from "primevue/progressspinner";
 
-import { fetchLoopRouteCSM, fetchRouteMC } from "../api";
+import { fetchNearestPoint } from "../api";
+import { watch } from "fs";
 
 const props = defineProps<{ currentTrip?: any }>();
 const emit = defineEmits(["navigation-stopped"]);
 
-const zoom = 15;
+const zoom = ref(15);
 
 const isTripPickerVisible = ref(false);
 const isTripPicked = ref(false);
 
 const chosenTrip = ref();
 const tripDestinations = ref();
-
 const geojson = ref(undefined);
+
+const waypoint = ref({
+  name: "Waypoint",
+  pointName: "",
+  lat: 0,
+  lon: 0,
+});
 
 onMounted(() => {
   if (!props.currentTrip) return;
@@ -36,43 +37,9 @@ onMounted(() => {
   isTripPicked.value = true;
 });
 
-const startNavigating = (e: any) => {
-  isTripPicked.value = true;
-  chosenTrip.value = e;
-};
-
 const stopNavigating = () => {
   isTripPicked.value = false;
   emit("navigation-stopped");
-};
-
-const isLoaderVisible = ref(false);
-
-const searchForTrips = async (destinations: any[], params: any[]) => {
-  isTripPickerVisible.value = true;
-  tripDestinations.value = destinations;
-  const mappedParams = params
-    .map((param) => {
-      return `${param.type}=${param.value}`;
-    })
-    .join("&");
-
-  let data;
-  if (
-    tripDestinations.value.length === 2 &&
-    tripDestinations.value[0].pointName === tripDestinations.value[1].pointName
-  ) {
-    const pointForLooping = tripDestinations.value[0];
-    isLoaderVisible.value = true;
-    data = await fetchLoopRouteCSM(
-      `${pointForLooping.lon},${pointForLooping.lat}`,
-      mappedParams
-    );
-    isLoaderVisible.value = false;
-  } else {
-    data = await fetchRouteMC(tripDestinations.value);
-  }
-  geojson.value = data.geometry;
 };
 
 const isRouteLiked = ref(false);
@@ -81,16 +48,41 @@ const addRouteToFav = () => {
   // save route to favourites (gpx file)
   isRouteLiked.value = !isRouteLiked.value;
 };
+
+const mapClicked = async (event: any) => {
+  try {
+    const latLng = event.latlng;
+    const result = await fetchNearestPoint(latLng.lng, latLng.lat);
+    waypoint.value = {
+      name: "Waypoint",
+      pointName: result.features[0].properties.name,
+      lat: result.features[0].geometry.coordinates[1],
+      lon: result.features[0].geometry.coordinates[0],
+    };
+  } catch (error) {
+    console.error("Błąd podczas pobierania najbliższego punktu:", error);
+  }
+};
 </script>
 
 <template>
   <TheDestinationPicker
     v-if="!isTripPicked"
-    @destination-chosen="($event1: any[], $event2: any[]) => searchForTrips($event1, $event2)"
+    :waypoints="waypoint"
+    @emit-geo-json="
+      (e) => {
+        geojson = e;
+      }
+    "
     @destination-not-chosen="
       () => {
         isTripPickerVisible = false;
         geojson = undefined;
+      }
+    "
+    @destination-chosen="
+      (e) => {
+        tripDestinations = e;
       }
     "
   />
@@ -108,6 +100,7 @@ const addRouteToFav = () => {
       v-model:zoom="zoom"
       :options="{ zoomControl: false }"
       :center="[50.29117904070245, 18.680356029431803]"
+      @contextmenu="mapClicked"
     >
       <l-tile-layer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -152,37 +145,11 @@ const addRouteToFav = () => {
   </div>
 
   <Transition name="slide-down">
-    <TheTripPicker
-      v-if="isTripPickerVisible && !isTripPicked"
-      :trip-destinations="tripDestinations"
-      @trip-picked="startNavigating"
-    />
-  </Transition>
-
-  <Transition name="slide-down">
     <TheTripSteps v-if="isTripPicked" />
   </Transition>
-  <div v-if="isLoaderVisible" class="overlay">
-    <ProgressSpinner
-      v-if="isTripPickerVisible && !isTripPicked"
-      class="overlay__spinner"
-    />
-  </div>
 </template>
 
 <style lang="scss" scoped>
-.overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 1;
-  height: 100vh;
-  width: 100vw;
-  background-color: rgba(255, 255, 255, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
 .map {
   height: 100vh;
   width: 100vw;

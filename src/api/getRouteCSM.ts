@@ -53,51 +53,59 @@ const itineraryPointsToString = (itineraryPoints: ItineraryPoint[]) => {
  */
 
 const convertToGeoJSON = (data: any) => {
-  const mappedData = data.marker[0]["@attributes"].coordinates
+  const newData = data.marker[0];
+  const newElement = newData["@attributes"].coordinates
     .split(" ")
     .map((point: string) => {
       const [lon, lat] = point.split(",");
       return [parseFloat(lon), parseFloat(lat)];
     });
+
   const convertedToGeoJSON = {
     geometry: {
       type: "Feature",
       geometry: {
         type: "LineString",
-        coordinates: mappedData,
+        coordinates: newElement,
       },
       properties: {},
     },
   };
-
   return convertedToGeoJSON;
 };
 
-export const fetchLoopRouteCSM = async (
-  itineraryPoint: string,
-  params: string
-) => {
-  const url = `https://www.cyclestreets.net/api/journey.json?key=${ConfigEnv.apiKey}&reporterrors=1&itinerarypoints=${itineraryPoint}&plan=leisure&${params}`;
+export const fetchLoopRouteCSM = async (itineraryPoint: string) => {
+  const allTypes = ["5000", "15000", "25000", "35000"];
 
-  const response = await fetch(url);
-  const data = await response.json();
+  const arrayOfRoutes = await Promise.all(
+    allTypes.map(async (type) => {
+      const url = `https://www.cyclestreets.net/api/journey.json?key=${ConfigEnv.apiKey}&reporterrors=1&itinerarypoints=${itineraryPoint}&plan=leisure&distance=${type}`;
+      const response = await fetch(url);
+      const data = await response.json();
+      return convertToGeoJSON(data);
+    })
+  );
 
-  return convertToGeoJSON(data);
+  return arrayOfRoutes;
 };
 
-export const fetchRouteCSM = async (
-  itineraryPoints: ItineraryPoint[],
-  plan: planType
-) => {
-  const url = `https://www.cyclestreets.net/api/journey.json?key=${
-    ConfigEnv.apiKey
-  }&reporterrors=1&itinerarypoints=${itineraryPointsToString(
-    itineraryPoints
-  )}&plan=${plan}`;
-  const response = await fetch(url);
-  const data = await response.json();
+export const fetchRouteCSM = async (itineraryPoints: ItineraryPoint[]) => {
+  const allTypes = ["balanced", "fastest", "quietest", "shortest"];
 
-  return data;
+  const arrayOfRoutes = await Promise.all(
+    allTypes.map(async (type) => {
+      const url = `https://www.cyclestreets.net/api/journey.json?key=${
+        ConfigEnv.apiKey
+      }&reporterrors=1&itinerarypoints=${itineraryPointsToString(
+        itineraryPoints
+      )}&plan=${type}`;
+      const response = await fetch(url);
+      const data = await response.json();
+      return convertToGeoJSON(data);
+    })
+  );
+
+  return arrayOfRoutes;
 };
 
 export const testRouteCSM = async () => {
@@ -119,7 +127,7 @@ export const testRouteCSM = async () => {
     },
   ];
   const plan = planType.balanced;
-  const data = await fetchRouteCSM(itineraryPoints, plan);
+  const data = await fetchRouteCSM(itineraryPoints);
   console.log(data);
   console.log(
     "L.marker((waypoint['@attributes'].longitude, waypoint['@attributes'].latitude)):"
