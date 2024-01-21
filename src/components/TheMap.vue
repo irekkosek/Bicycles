@@ -76,7 +76,6 @@ const mapClicked = async (event: any) => {
     @destination-not-chosen="
       () => {
         isTripPickerVisible = false;
-        geojson = undefined;
       }
     "
     @destination-chosen="

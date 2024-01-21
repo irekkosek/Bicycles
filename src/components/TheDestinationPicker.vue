@@ -87,7 +87,6 @@ const typeOfTrip = ref("");
 const searchForTrips = async (destinations: any[]) => {
   isLoaderVisible.value = true;
   isTripPickerVisible.value = false;
-  emit("emit-geo-json", undefined);
   tripDestinations.value = destinations;
 
   let data;
@@ -104,6 +103,7 @@ const searchForTrips = async (destinations: any[]) => {
       `${pointForLooping.lon},${pointForLooping.lat}`
     );
     possibleTrips.value = data;
+    startNavigating(0);
   } else {
     typeOfTrip.value = "normal";
     const mapped = tripDestinations.value.map((destination: any) => {
@@ -115,6 +115,7 @@ const searchForTrips = async (destinations: any[]) => {
     });
     data = await fetchRouteCSM(mapped);
     possibleTrips.value = data;
+    startNavigating(lastPicedTripIndex.value);
   }
 
   possibleTrips.value = possibleTrips.value.map((trip: any) => {
@@ -166,7 +167,10 @@ const toggle = (event: any) => {
   overlayPanelComponent.value.toggle(event);
 };
 
+const lastPicedTripIndex = ref(0);
+
 const startNavigating = (event: any) => {
+  lastPicedTripIndex.value = event;
   const validGeoJson = possibleTrips.value[event].geometry;
 
   emit("emit-geo-json", validGeoJson);
