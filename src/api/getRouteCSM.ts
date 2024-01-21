@@ -1,4 +1,6 @@
 import { ConfigEnv } from "./env.config";
+import { fetchGpx } from "./getGpx";
+
 
 //example url https://www.cyclestreets.net/api/journey.json?key=registeredapikey&reporterrors=1&itinerarypoints=0.11795,52.20530,City+Centre|0.13140,52.22105,Mulberry+Close|0.14732,52.19965,Thoday+Street&plan=quietest
 
@@ -110,7 +112,9 @@ export const fetchRouteCSM = async (itineraryPoints: ItineraryPoint[]) => {
       )}&plan=${type}`;
       const response = await fetch(url);
       const data = await response.json();
-      return convertToGeoJSON(data);
+      const interary = data.marker[0]["@attributes"].itinerary;
+      const gpxUrl = `https://www.cyclestreets.net/journey/${interary}/cyclestreets${interary}${plan}.gpx`;
+      return [convertToGeoJSON(data), gpxUrl];
     })
   );
 
