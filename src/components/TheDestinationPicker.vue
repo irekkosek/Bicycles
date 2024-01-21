@@ -40,7 +40,7 @@ watch(
   () => props.waypoints,
   async (newValue) => {
     if (!newValue) return;
-    stops.value.push(newValue);
+    stops.value.push(newValue as never);
     await mapAndSendParameters();
   }
 );
@@ -86,6 +86,7 @@ const typeOfTrip = ref("");
 
 const searchForTrips = async (destinations: any[]) => {
   isLoaderVisible.value = true;
+  isTripPickerVisible.value = false;
   emit("emit-geo-json", undefined);
   tripDestinations.value = destinations;
 
@@ -105,7 +106,7 @@ const searchForTrips = async (destinations: any[]) => {
     possibleTrips.value = data;
   } else {
     typeOfTrip.value = "normal";
-    const mapped = tripDestinations.value.map((destination) => {
+    const mapped = tripDestinations.value.map((destination: any) => {
       return {
         lat: destination.lat,
         lon: destination.lon,

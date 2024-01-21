@@ -107,37 +107,3 @@ export const fetchRouteCSM = async (itineraryPoints: ItineraryPoint[]) => {
 
   return arrayOfRoutes;
 };
-
-export const testRouteCSM = async () => {
-  const itineraryPoints: ItineraryPoint[] = [
-    {
-      lat: 52.2053,
-      lon: 0.11795,
-      name: "City Centre",
-    },
-    {
-      lat: 52.22105,
-      lon: 0.1314,
-      name: "Mulberry Close",
-    },
-    {
-      lat: 52.19965,
-      lon: 0.14732,
-      name: "Thoday Street",
-    },
-  ];
-  const plan = planType.balanced;
-  const data = await fetchRouteCSM(itineraryPoints);
-  console.log(data);
-  console.log(
-    "L.marker((waypoint['@attributes'].longitude, waypoint['@attributes'].latitude)):"
-  );
-  data.waypoint.forEach((waypoint: any) => {
-    console.log(
-      L.marker(
-        (waypoint["@attributes"].longitude, waypoint["@attributes"].latitude)
-      )
-    );
-  });
-  return data;
-};

@@ -10,7 +10,6 @@ import {
 } from "@vue-leaflet/vue-leaflet";
 
 import { fetchNearestPoint } from "../api";
-import { watch } from "fs";
 
 const props = defineProps<{ currentTrip?: any }>();
 const emit = defineEmits(["navigation-stopped"]);
