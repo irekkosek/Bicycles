@@ -10,9 +10,6 @@ import { TheTripPicker } from ".";
 
 const props = defineProps<{
   waypoints: any;
-  isTripPickerVisible: boolean;
-  tripDestinations: any;
-  isLoaderVisible: boolean;
 }>();
 
 const filteredCities = ref();
@@ -33,7 +30,7 @@ const routeObject = ref([
 ]);
 
 const isParamPickerVisible = ref(false);
-const isTripPickerVisible = ref(props.isTripPickerVisible);
+const isTripPickerVisible = ref(false);
 
 const emit = defineEmits([
   "destination-chosen",
@@ -83,8 +80,8 @@ const searchForNewPoint = async (event: any, what: string) => {
   });
 };
 
-const tripDestinations = ref(props.tripDestinations);
-const isLoaderVisible = ref(props.isLoaderVisible);
+const tripDestinations = ref();
+const isLoaderVisible = ref(false);
 
 const possibleTrips = ref();
 

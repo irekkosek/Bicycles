@@ -42,6 +42,7 @@ onMounted(() => {
 const stopNavigating = () => {
   isTripPicked.value = false;
   isTripPickerVisible.value = true;
+  geojson.value = undefined;
 };
 
 const mapClicked = async (event: any) => {
@@ -68,7 +69,6 @@ watch(currentItinerary, () => {
 });
 
 const bounds = ref();
-const isLoaderVisible = ref(false);
 
 const fitBounds = () => {
   let featureGroups = tripDestinations.value.map((marker: any) => {
@@ -84,9 +84,6 @@ const fitBounds = () => {
   <TheDestinationPicker
     v-if="!isTripPicked"
     :waypoints="waypoint"
-    :is-trip-picker-visible="isTripPickerVisible"
-    :trip-destinations="tripDestinations"
-    :is-loader-visible="isLoaderVisible"
     @start-navigating="
       () => {
         isTripPickerVisible = false;
