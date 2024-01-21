@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from "vue";
+import { onMounted, ref } from "vue";
 import { TheDestinationPicker, TheTripInfo } from "../components";
 import {
   LMap,
@@ -10,7 +10,7 @@ import {
   LTooltip,
 } from "@vue-leaflet/vue-leaflet";
 
-import { fetchNearestPoint, fetchPOI } from "../api";
+import { fetchNearestPoint, fetchPOI, fetchGpx } from "../api";
 import L from "leaflet";
 
 const props = defineProps<{ currentTrip?: any }>();
@@ -63,12 +63,9 @@ const mapClicked = async (event: any) => {
 const currentItinerary = ref();
 const currentRouteObject = ref();
 
-watch(currentItinerary, () => {
-  if (!currentItinerary.value) return;
-  // get gpx
-});
+const allTypes = ["balanced", "fastest", "quietest", "shortest", "leisure"];
 
-const bounds = ref();
+const currentRouteIndex = ref(0);
 
 const fitBounds = () => {
   let featureGroups = tripDestinations.value.map((marker: any) => {
@@ -107,12 +104,36 @@ const showRoute = (e: any) => {
   geojson.value = e.geometry;
   currentItinerary.value = e.myCustomProperties.itinerary;
 };
+
+const downloadGPX = async () => {
+  const gpxUrl = `https://www.cyclestreets.net/journey/${
+    currentItinerary.value
+  }/cyclestreets${currentItinerary.value}${
+    allTypes[currentRouteIndex.value]
+  }.gpx`;
+  const file = await fetchGpx(gpxUrl).then((res) => res.blob());
+
+  const csv = file;
+  const blob = new Blob([csv]);
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+
+  a.setAttribute("hidden", "");
+  a.setAttribute("href", url);
+  a.setAttribute("download", `route-${currentItinerary.value}.gpx`);
+
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  window.URL.revokeObjectURL(url);
+};
 </script>
 
 <template>
   <TheDestinationPicker
     v-if="!isTripPicked"
     :waypoints="waypoint"
+    @route-index="currentRouteIndex = $event"
     @start-navigating="
       () => {
         isTripPickerVisible = false;
@@ -155,7 +176,6 @@ const showRoute = (e: any) => {
       v-model:zoom="zoom"
       :options="{ zoomControl: false }"
       :center="[50.29117904070245, 18.680356029431803]"
-      :bounds="bounds"
       @contextmenu="mapClicked"
     >
       <l-tile-layer
@@ -206,7 +226,7 @@ const showRoute = (e: any) => {
           : 'src/assets/violet-heart-oulined-icon.svg'
       "
     /> -->
-    <img src="../assets/download-icon.svg" />
+    <img @click="downloadGPX" src="../assets/download-icon.svg" />
   </div>
 
   <!-- <Transition name="slide-down">

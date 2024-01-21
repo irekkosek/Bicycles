@@ -37,6 +37,7 @@ const emit = defineEmits([
   "destination-not-chosen",
   "emit-geo-json",
   "start-navigating",
+  "route-index",
 ]);
 
 watch(
@@ -118,6 +119,7 @@ const searchForTrips = async (destinations: any[]) => {
         },
       };
     });
+    emit("route-index", 5);
     showSelectedRoute(0);
   } else {
     typeOfTrip.value = "normal";
@@ -191,6 +193,7 @@ const showSelectedRoute = (event: any) => {
 
   emit("emit-geo-json", validGeoJson);
   emit("destination-chosen", tripDestinations.value);
+  emit("route-index", event);
 };
 
 const startNavigating = () => {

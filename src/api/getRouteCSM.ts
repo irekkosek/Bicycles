@@ -1,4 +1,5 @@
 import { ConfigEnv } from "./env.config";
+import { fetchGpx } from "./getGpx";
 
 //example url https://www.cyclestreets.net/api/journey.json?key=registeredapikey&reporterrors=1&itinerarypoints=0.11795,52.20530,City+Centre|0.13140,52.22105,Mulberry+Close|0.14732,52.19965,Thoday+Street&plan=quietest
 
@@ -84,7 +85,7 @@ const convertToGeoJSON = (data: any) => {
 };
 
 export const fetchLoopRouteCSM = async (itineraryPoint: string) => {
-  const allTypes = ["5000", "15000", "25000", "35000"];
+  const allTypes = ["7000", "16000", "26000", "35000"];
 
   const arrayOfRoutes = await Promise.all(
     allTypes.map(async (type) => {
