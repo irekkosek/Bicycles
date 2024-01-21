@@ -1,4 +1,5 @@
 import { ConfigEnv } from "./env.config";
+import L from "leaflet";
 import { fetchGpx } from "./getGpx";
 
 
@@ -45,13 +46,6 @@ const itineraryPointsToString = (itineraryPoints: ItineraryPoint[]) => {
   });
   return itineraryPointsString.slice(0, -1);
 };
-/**
- *
- * @param itineraryPoints
- * @param plan
- * @returns Return values, in detail https://www.cyclestreets.net/api/v1/journey/#jpReturn
- *
- */
 
 const convertToGeoJSON = (data: any) => {
   const newData = data.marker[0];
@@ -99,7 +93,13 @@ export const fetchLoopRouteCSM = async (itineraryPoint: string) => {
 
   return arrayOfRoutes;
 };
-
+/**
+ *
+ * @param itineraryPoints
+ * @param plan
+ * @returns [data, gpxUrl] Return values, in detail https://www.cyclestreets.net/api/v1/journey/#jpReturn
+ *
+ */
 export const fetchRouteCSM = async (itineraryPoints: ItineraryPoint[]) => {
   const allTypes = ["balanced", "fastest", "quietest", "shortest"];
 
@@ -120,3 +120,5 @@ export const fetchRouteCSM = async (itineraryPoints: ItineraryPoint[]) => {
 
   return arrayOfRoutes;
 };
+
+
