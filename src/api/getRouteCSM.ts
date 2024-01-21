@@ -44,13 +44,6 @@ const itineraryPointsToString = (itineraryPoints: ItineraryPoint[]) => {
   });
   return itineraryPointsString.slice(0, -1);
 };
-/**
- *
- * @param itineraryPoints
- * @param plan
- * @returns Return values, in detail https://www.cyclestreets.net/api/v1/journey/#jpReturn
- *
- */
 
 const convertToGeoJSON = (data: any) => {
   const newData = data.marker[0];
@@ -98,7 +91,13 @@ export const fetchLoopRouteCSM = async (itineraryPoint: string) => {
 
   return arrayOfRoutes;
 };
-
+/**
+ *
+ * @param itineraryPoints
+ * @param plan
+ * @returns [data, gpxUrl] Return values, in detail https://www.cyclestreets.net/api/v1/journey/#jpReturn
+ *
+ */
 export const fetchRouteCSM = async (itineraryPoints: ItineraryPoint[]) => {
   const allTypes = ["balanced", "fastest", "quietest", "shortest"];
 
@@ -111,7 +110,9 @@ export const fetchRouteCSM = async (itineraryPoints: ItineraryPoint[]) => {
       )}&plan=${type}`;
       const response = await fetch(url);
       const data = await response.json();
-      return convertToGeoJSON(data);
+      const interary = data.marker[0]["@attributes"].itinerary;
+      const gpxUrl = `https://www.cyclestreets.net/journey/${interary}/cyclestreets${interary}${plan}.gpx`;
+      return [convertToGeoJSON(data), gpxUrl];
     })
   );
 
