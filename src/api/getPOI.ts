@@ -6,10 +6,16 @@ export const fetchPOI = async (
   radius: number,
   limit: number
 ) => {
-  const url = `https://api.cyclestreets.net/v2/pois.locations?key=${ConfigEnv.apiKey}&type=restaurants&longitude=${lon}&latitude=${lat}&radius=${radius}&limit=${limit}&fields=id,latitude,longitude,name,osmTags`;
-  const response = await fetch(url);
-  const data = await response.json();
-  return data;
+  const poisTypes = ["restaurants", "viewpoints", "parks"];
+  const pois = await Promise.all(
+    poisTypes.map(async (type) => {
+      const url = `https://api.cyclestreets.net/v2/pois.locations?key=${ConfigEnv.apiKey}&type=${type}&longitude=${lon}&latitude=${lat}&radius=${radius}&limit=${limit}&fields=id,latitude,longitude,name,osmTags`;
+      const response = await fetch(url);
+      const data = await response.json();
+      return { features: data.features };
+    })
+  );
+  return pois;
 };
 
 export const testPOI = async () => {

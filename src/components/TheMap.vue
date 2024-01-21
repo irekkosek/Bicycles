@@ -80,15 +80,21 @@ const fitBounds = () => {
 
   setTimeout(async () => {
     const center = map.value.leafletObject.getCenter();
-    pois.value = await fetchPOI(center.lat, center.lng, 10, 10);
+    pois.value = await fetchPOI(center.lat, center.lng, 10, 5);
 
-    poisMarkers.value = pois.value.features.map((poi: any) => {
-      return {
-        latLng: [poi.geometry.coordinates[1], poi.geometry.coordinates[0]],
-        name: poi.properties.name,
-        icon: poi.properties.iconUrl,
-      };
+    poisMarkers.value = pois.value.map((poi: any) => {
+      return poi.features.map((poi: any) => {
+        return {
+          latLng: [poi.geometry.coordinates[1], poi.geometry.coordinates[0]],
+          name: poi.properties.name,
+          icon: poi.properties.iconUrl,
+        };
+      });
     });
+    poisMarkers.value = poisMarkers.value.reduce(
+      (result: string | any[], array: any) => result.concat(array),
+      []
+    );
   }, 1000);
 };
 
