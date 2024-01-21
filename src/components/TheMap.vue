@@ -12,7 +12,6 @@ import {
 
 import { fetchNearestPoint, fetchPOI, fetchGpx } from "../api";
 import L from "leaflet";
-
 const props = defineProps<{ currentTrip?: any }>();
 
 const zoom = ref(15);
@@ -38,6 +37,12 @@ onMounted(() => {
   chosenTrip.value = props.currentTrip;
   isTripPicked.value = true;
 });
+
+const newCenter = ref();
+
+const zoomToStart = (e: any) => {
+  newCenter.value = [e.lat, e.lon];
+};
 
 const stopNavigating = () => {
   isTripPicked.value = false;
@@ -161,6 +166,7 @@ const downloadGPX = async () => {
         fitBounds();
       }
     "
+    @emit-start="zoomToStart"
   />
   <Transition name="fade-in">
     <TheTripInfo
@@ -175,7 +181,7 @@ const downloadGPX = async () => {
       ref="map"
       v-model:zoom="zoom"
       :options="{ zoomControl: false }"
-      :center="[50.29117904070245, 18.680356029431803]"
+      :center="newCenter ?? [50.29117904070245, 18.680356029431803]"
       @contextmenu="mapClicked"
     >
       <l-tile-layer
@@ -213,7 +219,12 @@ const downloadGPX = async () => {
         :visible="geojson !== undefined"
       >
         <l-icon :icon-url="poi.icon"> </l-icon>
-        <l-tooltip>Możesz zwiedzić: {{ poi.name }}</l-tooltip>
+        <l-tooltip
+          >Możesz zwiedzić:
+          {{
+            poi.name === "Un-named place of interest" ? "to miejsce" : poi.name
+          }}</l-tooltip
+        >
       </l-marker>
     </l-map>
   </div>

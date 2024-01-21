@@ -38,6 +38,7 @@ const emit = defineEmits([
   "emit-geo-json",
   "start-navigating",
   "route-index",
+  "emit-start",
 ]);
 
 watch(
@@ -119,8 +120,8 @@ const searchForTrips = async (destinations: any[]) => {
         },
       };
     });
-    emit("route-index", 5);
     showSelectedRoute(0);
+    emit("route-index", 4);
   } else {
     typeOfTrip.value = "normal";
     const mapped = tripDestinations.value.map((destination: any) => {
@@ -145,6 +146,7 @@ const searchForTrips = async (destinations: any[]) => {
       };
     });
     showSelectedRoute(lastPicedTripIndex.value);
+    emit("route-index", lastPicedTripIndex.value);
   }
 
   isTripPickerVisible.value = true;
@@ -152,6 +154,9 @@ const searchForTrips = async (destinations: any[]) => {
 };
 
 watchEffect(async () => {
+  if (routeObject.value[0] && routeObject.value[0].pointName) {
+    emit("emit-start", routeObject.value[0]);
+  }
   if (
     !routeObject.value[0] ||
     !routeObject.value[1] ||
@@ -193,7 +198,6 @@ const showSelectedRoute = (event: any) => {
 
   emit("emit-geo-json", validGeoJson);
   emit("destination-chosen", tripDestinations.value);
-  emit("route-index", event);
 };
 
 const startNavigating = () => {
