@@ -1,6 +1,6 @@
 import { ConfigEnv } from "./env.config";
 import L from "leaflet";
-
+import { fetchGpx } from "./getGpx";
 
 
 //example url https://www.cyclestreets.net/api/journey.json?key=registeredapikey&reporterrors=1&itinerarypoints=0.11795,52.20530,City+Centre|0.13140,52.22105,Mulberry+Close|0.14732,52.19965,Thoday+Street&plan=quietest
@@ -56,7 +56,9 @@ export const fetchRouteCSM = async (itineraryPoints: ItineraryPoint[], plan: pla
     const url = `https://www.cyclestreets.net/api/journey.json?key=${ConfigEnv.apiKey}&reporterrors=1&itinerarypoints=${itineraryPointsToString(itineraryPoints)}&plan=${plan}`;
     const response = await fetch(url);
     const data = await response.json();
-    return data;
+    const interary = data.marker[0]["@attributes"].itinerary;
+    const gpxUrl = `https://www.cyclestreets.net/journey/${interary}/cyclestreets${interary}${plan}.gpx`;
+    return [data, gpxUrl];
 }
 
 export const testRouteCSM = async () => {
@@ -78,11 +80,13 @@ export const testRouteCSM = async () => {
         }
     ];
     const plan = planType.balanced;
-    const data = await fetchRouteCSM(itineraryPoints, plan);
+    const [data, gpxUrl] = await fetchRouteCSM(itineraryPoints, plan);
     console.log(data)
     console.log("L.marker((waypoint['@attributes'].longitude, waypoint['@attributes'].latitude)):")
     data.waypoint.forEach((waypoint: any) => {
             console.log(L.marker((waypoint["@attributes"].longitude, waypoint["@attributes"].latitude)))
         })
+    const file = await fetchGpx(gpxUrl);
+    console.log(file)
     return data;
 };
