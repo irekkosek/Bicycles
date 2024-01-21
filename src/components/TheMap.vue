@@ -10,7 +10,7 @@ import {
   LTooltip,
 } from "@vue-leaflet/vue-leaflet";
 
-import { fetchNearestPoint } from "../api";
+import { fetchNearestPoint, fetchPOI } from "../api";
 import L from "leaflet";
 
 const props = defineProps<{ currentTrip?: any }>();
@@ -77,6 +77,29 @@ const fitBounds = () => {
 
   let group = new L.featureGroup(featureGroups);
   map.value.leafletObject.fitBounds(group.getBounds(), { padding: [50, 50] });
+
+  setTimeout(async () => {
+    const center = map.value.leafletObject.getCenter();
+    pois.value = await fetchPOI(center.lat, center.lng, 10, 10);
+
+    poisMarkers.value = pois.value.features.map((poi: any) => {
+      return {
+        latLng: [poi.geometry.coordinates[1], poi.geometry.coordinates[0]],
+        name: poi.properties.name,
+        icon: poi.properties.iconUrl,
+      };
+    });
+  }, 1000);
+};
+
+const pois = ref();
+
+const poisMarkers = ref();
+
+const showRoute = (e: any) => {
+  currentRouteObject.value = e;
+  geojson.value = e.geometry;
+  currentItinerary.value = e.myCustomProperties.itinerary;
 };
 </script>
 
@@ -95,16 +118,10 @@ const fitBounds = () => {
           kcal: currentRouteObject.myCustomProperties.calories,
         };
         isTripPicked = true;
-        fitBounds();
+        poisMarkers = [];
       }
     "
-    @emit-geo-json="
-      (e) => {
-        currentRouteObject = e;
-        geojson = e.geometry;
-        currentItinerary = e.myCustomProperties.itinerary;
-      }
-    "
+    @emit-geo-json="showRoute"
     @destination-not-chosen="
       () => {
         isTripPickerVisible = true;
@@ -163,6 +180,14 @@ const fitBounds = () => {
         >
         </l-icon>
         <l-tooltip>{{ dest.pointName }}</l-tooltip>
+      </l-marker>
+      <l-marker
+        v-for="poi in poisMarkers ?? []"
+        :lat-lng="poi.latLng"
+        :visible="geojson !== undefined"
+      >
+        <l-icon :icon-url="poi.icon"> </l-icon>
+        <l-tooltip>Możesz zwiedzić: {{ poi.name }}</l-tooltip>
       </l-marker>
     </l-map>
   </div>
