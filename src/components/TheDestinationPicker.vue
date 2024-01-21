@@ -8,7 +8,12 @@ import { fetchGeocodingResults } from "../api/getElement";
 import { fetchLoopRouteCSM, fetchRouteCSM } from "../api";
 import { TheTripPicker } from ".";
 
-const props = defineProps<{ waypoints: any }>();
+const props = defineProps<{
+  waypoints: any;
+  isTripPickerVisible: boolean;
+  tripDestinations: any;
+  isLoaderVisible: boolean;
+}>();
 
 const filteredCities = ref();
 const stops = ref([]);
@@ -28,12 +33,13 @@ const routeObject = ref([
 ]);
 
 const isParamPickerVisible = ref(false);
-const isTripPickerVisible = ref(false);
+const isTripPickerVisible = ref(props.isTripPickerVisible);
 
 const emit = defineEmits([
   "destination-chosen",
   "destination-not-chosen",
   "emit-geo-json",
+  "start-navigating",
 ]);
 
 watch(
@@ -77,8 +83,8 @@ const searchForNewPoint = async (event: any, what: string) => {
   });
 };
 
-const tripDestinations = ref();
-const isLoaderVisible = ref(false);
+const tripDestinations = ref(props.tripDestinations);
+const isLoaderVisible = ref(props.isLoaderVisible);
 
 const possibleTrips = ref();
 
@@ -103,7 +109,19 @@ const searchForTrips = async (destinations: any[]) => {
       `${pointForLooping.lon},${pointForLooping.lat}`
     );
     possibleTrips.value = data;
-    startNavigating(0);
+    possibleTrips.value = possibleTrips.value.map((trip: any) => {
+      return {
+        ...trip,
+        myCustomProperties: {
+          ...trip.myCustomProperties,
+          from: routeObject.value.find((element) => element.name === "Start")!
+            .pointName,
+          to: routeObject.value.find((element) => element.name === "End")!
+            .pointName,
+        },
+      };
+    });
+    showSelectedRoute(0);
   } else {
     typeOfTrip.value = "normal";
     const mapped = tripDestinations.value.map((destination: any) => {
@@ -115,20 +133,21 @@ const searchForTrips = async (destinations: any[]) => {
     });
     data = await fetchRouteCSM(mapped);
     possibleTrips.value = data;
-    startNavigating(lastPicedTripIndex.value);
+    possibleTrips.value = possibleTrips.value.map((trip: any) => {
+      return {
+        ...trip,
+        myCustomProperties: {
+          ...trip.myCustomProperties,
+          from: routeObject.value.find((element) => element.name === "Start")!
+            .pointName,
+          to: routeObject.value.find((element) => element.name === "End")!
+            .pointName,
+        },
+      };
+    });
+    showSelectedRoute(lastPicedTripIndex.value);
   }
 
-  possibleTrips.value = possibleTrips.value.map((trip: any) => {
-    return {
-      ...trip,
-      properties: {
-        from: routeObject.value.find((element) => element.name === "Start")!
-          .pointName,
-        to: routeObject.value.find((element) => element.name === "End")!
-          .pointName,
-      },
-    };
-  });
   isTripPickerVisible.value = true;
   isLoaderVisible.value = false;
 };
@@ -169,12 +188,16 @@ const toggle = (event: any) => {
 
 const lastPicedTripIndex = ref(0);
 
-const startNavigating = (event: any) => {
+const showSelectedRoute = (event: any) => {
   lastPicedTripIndex.value = event;
-  const validGeoJson = possibleTrips.value[event].geometry;
+  const validGeoJson = possibleTrips.value[event];
 
   emit("emit-geo-json", validGeoJson);
   emit("destination-chosen", tripDestinations.value);
+};
+
+const startNavigating = () => {
+  emit("start-navigating");
 };
 </script>
 
@@ -239,11 +262,19 @@ const startNavigating = (event: any) => {
     />
   </div>
 
+  <Button
+    v-if="isTripPickerVisible"
+    class="start-button"
+    icon="pi pi-play"
+    rounded
+    @click="startNavigating"
+  />
+
   <Transition name="slide-down">
     <TheTripPicker
       v-if="isTripPickerVisible"
       :trip-destinations="possibleTrips"
-      @trip-picked="startNavigating"
+      @trip-picked="showSelectedRoute"
       :type-of-trip="typeOfTrip"
     />
   </Transition>
@@ -305,6 +336,12 @@ const startNavigating = (event: any) => {
       animation: spin 1s ease-in-out infinite forwards;
     }
   }
+}
+
+.start-button {
+  position: absolute;
+  right: 1rem;
+  z-index: 3;
 }
 
 @keyframes spin {

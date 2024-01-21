@@ -7,7 +7,7 @@ const props = defineProps<{
     geometry: {
       coordinates: [number, number][];
     };
-    properties: {
+    myCustomProperties: {
       from: string;
       to: string;
     };
@@ -45,7 +45,7 @@ const emit = defineEmits(["trip-picked"]);
 
     <div class="trip-picker__items">
       <div
-        v-for="({ properties }, index) in props.tripDestinations"
+        v-for="({ myCustomProperties }, index) in props.tripDestinations"
         :key="index"
         class="trip-item"
         @click="
@@ -56,7 +56,7 @@ const emit = defineEmits(["trip-picked"]);
         "
       >
         <div class="trip-item__name">
-          {{ properties.from }} - {{ properties.to }}
+          {{ myCustomProperties.from }} - {{ myCustomProperties.to }}
         </div>
         <div v-if="allTypes" class="trip-item__distance">
           {{ typeOfTrip === "normal" ? "Rower" : "" }} {{ allTypes[index] }}

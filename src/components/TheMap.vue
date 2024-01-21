@@ -1,18 +1,19 @@
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
-import { TheDestinationPicker, TheTripInfo, TheTripSteps } from "../components";
+import { onMounted, ref, watch } from "vue";
+import { TheDestinationPicker, TheTripInfo } from "../components";
 import {
   LMap,
   LTileLayer,
   LGeoJson,
   LMarker,
   LIcon,
+  LTooltip,
 } from "@vue-leaflet/vue-leaflet";
 
 import { fetchNearestPoint } from "../api";
+import L from "leaflet";
 
 const props = defineProps<{ currentTrip?: any }>();
-const emit = defineEmits(["navigation-stopped"]);
 
 const zoom = ref(15);
 
@@ -22,6 +23,8 @@ const isTripPicked = ref(false);
 const chosenTrip = ref();
 const tripDestinations = ref();
 const geojson = ref(undefined);
+
+const map = ref();
 
 const waypoint = ref({
   name: "Waypoint",
@@ -38,14 +41,7 @@ onMounted(() => {
 
 const stopNavigating = () => {
   isTripPicked.value = false;
-  emit("navigation-stopped");
-};
-
-const isRouteLiked = ref(false);
-
-const addRouteToFav = () => {
-  // save route to favourites (gpx file)
-  isRouteLiked.value = !isRouteLiked.value;
+  isTripPickerVisible.value = true;
 };
 
 const mapClicked = async (event: any) => {
@@ -62,25 +58,66 @@ const mapClicked = async (event: any) => {
     console.error("Błąd podczas pobierania najbliższego punktu:", error);
   }
 };
+
+const currentItinerary = ref();
+const currentRouteObject = ref();
+
+watch(currentItinerary, () => {
+  if (!currentItinerary.value) return;
+  // get gpx
+});
+
+const bounds = ref();
+const isLoaderVisible = ref(false);
+
+const fitBounds = () => {
+  let featureGroups = tripDestinations.value.map((marker: any) => {
+    return L.marker([marker.lat, marker.lon]);
+  });
+
+  let group = new L.featureGroup(featureGroups);
+  map.value.leafletObject.fitBounds(group.getBounds(), { padding: [50, 50] });
+};
 </script>
 
 <template>
   <TheDestinationPicker
     v-if="!isTripPicked"
     :waypoints="waypoint"
+    :is-trip-picker-visible="isTripPickerVisible"
+    :trip-destinations="tripDestinations"
+    :is-loader-visible="isLoaderVisible"
+    @start-navigating="
+      () => {
+        isTripPickerVisible = false;
+        chosenTrip = {
+          from: currentRouteObject.myCustomProperties.from,
+          to: currentRouteObject.myCustomProperties.to,
+          distance: currentRouteObject.myCustomProperties.length,
+          time: currentRouteObject.myCustomProperties.time,
+          kcal: currentRouteObject.myCustomProperties.calories,
+        };
+        isTripPicked = true;
+        fitBounds();
+      }
+    "
     @emit-geo-json="
       (e) => {
-        geojson = e;
+        currentRouteObject = e;
+        geojson = e.geometry;
+        currentItinerary = e.myCustomProperties.itinerary;
       }
     "
     @destination-not-chosen="
       () => {
-        isTripPickerVisible = false;
+        isTripPickerVisible = true;
+        isTripPicked = false;
       }
     "
     @destination-chosen="
       (e) => {
         tripDestinations = e;
+        fitBounds();
       }
     "
   />
@@ -98,6 +135,7 @@ const mapClicked = async (event: any) => {
       v-model:zoom="zoom"
       :options="{ zoomControl: false }"
       :center="[50.29117904070245, 18.680356029431803]"
+      :bounds="bounds"
       @contextmenu="mapClicked"
     >
       <l-tile-layer
@@ -126,25 +164,26 @@ const mapClicked = async (event: any) => {
           :iconSize="[32, 37]"
           :iconAnchor="[16, 37]"
         >
-        </l-icon
-      ></l-marker>
+        </l-icon>
+        <l-tooltip>{{ dest.pointName }}</l-tooltip>
+      </l-marker>
     </l-map>
   </div>
   <div v-if="isTripPicked" class="action-buttons">
-    <img
+    <!-- <img
       @click="addRouteToFav"
       :src="
         isRouteLiked
           ? 'src/assets/violet-heart-icon.svg'
           : 'src/assets/violet-heart-oulined-icon.svg'
       "
-    />
+    /> -->
     <img src="../assets/download-icon.svg" />
   </div>
 
-  <Transition name="slide-down">
+  <!-- <Transition name="slide-down">
     <TheTripSteps v-if="isTripPicked" />
-  </Transition>
+  </Transition> -->
 </template>
 
 <style lang="scss" scoped>

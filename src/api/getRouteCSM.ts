@@ -1,5 +1,4 @@
 import { ConfigEnv } from "./env.config";
-import L from "leaflet";
 
 //example url https://www.cyclestreets.net/api/journey.json?key=registeredapikey&reporterrors=1&itinerarypoints=0.11795,52.20530,City+Centre|0.13140,52.22105,Mulberry+Close|0.14732,52.19965,Thoday+Street&plan=quietest
 
@@ -69,6 +68,16 @@ const convertToGeoJSON = (data: any) => {
         coordinates: newElement,
       },
       properties: {},
+    },
+    myCustomProperties: {
+      itinerary: newData["@attributes"].itinerary,
+      length: newData["@attributes"].length,
+      time: newData["@attributes"].time,
+      calories: newData["@attributes"].calories,
+      west: newData["@attributes"].west,
+      east: newData["@attributes"].east,
+      north: newData["@attributes"].north,
+      south: newData["@attributes"].south,
     },
   };
   return convertedToGeoJSON;
