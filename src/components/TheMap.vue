@@ -1,24 +1,21 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
-import {
-  TheDestinationPicker,
-  TheTripPicker,
-  TheTripInfo,
-  TheTripSteps,
-} from "../components";
+import { TheDestinationPicker, TheTripInfo } from "../components";
 import {
   LMap,
   LTileLayer,
   LGeoJson,
   LMarker,
   LIcon,
+  LTooltip,
 } from "@vue-leaflet/vue-leaflet";
-import { fetchRouteMC, formatTypeMC, langType, routeType, fetchNearestPoint } from "../api";
+
+import { fetchNearestPoint, fetchPOI, fetchGpx } from "../api";
+import L from "leaflet";
 
 const props = defineProps<{ currentTrip?: any }>();
-const emit = defineEmits(["navigation-stopped"]);
 
-const zoom = 15;
+const zoom = ref(15);
 
 const isTripPickerVisible = ref(false);
 const isTripPicked = ref(false);
@@ -27,79 +24,141 @@ const chosenTrip = ref();
 const tripDestinations = ref();
 const geojson = ref(undefined);
 
+const map = ref();
+
 const waypoint = ref({
-  name:"Waypoint",
+  name: "Waypoint",
   pointName: "",
-  lat:0,
-  lon:0,
+  lat: 0,
+  lon: 0,
 });
 
-const stops = ref(  []);
 onMounted(() => {
   if (!props.currentTrip) return;
   chosenTrip.value = props.currentTrip;
   isTripPicked.value = true;
 });
 
-const startNavigating = (e: any) => {
-  isTripPicked.value = true;
-  chosenTrip.value = e;
-};
-
 const stopNavigating = () => {
   isTripPicked.value = false;
-  emit("navigation-stopped");
-};
-
-const searchForTrips = async (e: any) => {
   isTripPickerVisible.value = true;
-  tripDestinations.value = e;
-  console.log(tripDestinations.value);
-
-  const route = routeType.bikeRoad;
-  const lang = langType.en;
-  const outputFormat = formatTypeMC.geojson;
-  const avoidToll = false;
-  const data = await fetchRouteMC(
-    tripDestinations.value,
-    route,
-    lang,
-    outputFormat,
-    avoidToll
-  );
-  geojson.value = data.geometry;
+  geojson.value = undefined;
 };
 
-const isRouteLiked = ref(false);
-
-const addRouteToFav = () => {
-  // save route to favourites (gpx file)
-  isRouteLiked.value = !isRouteLiked.value;
-};
-
-const mapClicked = async (event: LMap.LeafletMouseEvent) =>{
+const mapClicked = async (event: any) => {
   try {
     const latLng = event.latlng;
     const result = await fetchNearestPoint(latLng.lng, latLng.lat);
-    waypoint.value.pointName = result.features[0].properties.name;
-    waypoint.value.lat = result.features[0].geometry.coordinates[1];
-    waypoint.value.lon = result.features[0].geometry.coordinates[0];
-    console.log(waypoint.value);
+    waypoint.value = {
+      name: "Waypoint",
+      pointName: result.features[0].properties.name,
+      lat: result.features[0].geometry.coordinates[1],
+      lon: result.features[0].geometry.coordinates[0],
+    };
   } catch (error) {
-    console.error('Błąd podczas pobierania najbliższego punktu:', error);
+    console.error("Błąd podczas pobierania najbliższego punktu:", error);
   }
-}
+};
+
+const currentItinerary = ref();
+const currentRouteObject = ref();
+
+const allTypes = ["balanced", "fastest", "quietest", "shortest", "leisure"];
+
+const currentRouteIndex = ref(0);
+
+const fitBounds = () => {
+  let featureGroups = tripDestinations.value.map((marker: any) => {
+    return L.marker([marker.lat, marker.lon]);
+  });
+
+  let group = new L.featureGroup(featureGroups);
+  map.value.leafletObject.fitBounds(group.getBounds(), { padding: [50, 50] });
+
+  setTimeout(async () => {
+    const center = map.value.leafletObject.getCenter();
+    pois.value = await fetchPOI(center.lat, center.lng, 10, 5);
+
+    poisMarkers.value = pois.value.map((poi: any) => {
+      return poi.features.map((poi: any) => {
+        return {
+          latLng: [poi.geometry.coordinates[1], poi.geometry.coordinates[0]],
+          name: poi.properties.name,
+          icon: poi.properties.iconUrl,
+        };
+      });
+    });
+    poisMarkers.value = poisMarkers.value.reduce(
+      (result: string | any[], array: any) => result.concat(array),
+      []
+    );
+  }, 1000);
+};
+
+const pois = ref();
+
+const poisMarkers = ref();
+
+const showRoute = (e: any) => {
+  currentRouteObject.value = e;
+  geojson.value = e.geometry;
+  currentItinerary.value = e.myCustomProperties.itinerary;
+};
+
+const downloadGPX = async () => {
+  const gpxUrl = `https://www.cyclestreets.net/journey/${
+    currentItinerary.value
+  }/cyclestreets${currentItinerary.value}${
+    allTypes[currentRouteIndex.value]
+  }.gpx`;
+  const file = await fetchGpx(gpxUrl).then((res) => res.blob());
+
+  const csv = file;
+  const blob = new Blob([csv]);
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+
+  a.setAttribute("hidden", "");
+  a.setAttribute("href", url);
+  a.setAttribute("download", `route-${currentItinerary.value}.gpx`);
+
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  window.URL.revokeObjectURL(url);
+};
 </script>
 
 <template>
   <TheDestinationPicker
     v-if="!isTripPicked"
-    :waypoints="stops"
-    @destination-chosen="searchForTrips"
-    @destination-not-chosen="
+    :waypoints="waypoint"
+    @route-index="currentRouteIndex = $event"
+    @start-navigating="
       () => {
         isTripPickerVisible = false;
-        geojson = undefined;
+        chosenTrip = {
+          from: currentRouteObject.myCustomProperties.from,
+          to: currentRouteObject.myCustomProperties.to,
+          distance: currentRouteObject.myCustomProperties.length,
+          time: currentRouteObject.myCustomProperties.time,
+          kcal: currentRouteObject.myCustomProperties.calories,
+        };
+        isTripPicked = true;
+        poisMarkers = [];
+      }
+    "
+    @emit-geo-json="showRoute"
+    @destination-not-chosen="
+      () => {
+        isTripPickerVisible = true;
+        isTripPicked = false;
+      }
+    "
+    @destination-chosen="
+      (e) => {
+        tripDestinations = e;
+        fitBounds();
       }
     "
   />
@@ -145,33 +204,34 @@ const mapClicked = async (event: LMap.LeafletMouseEvent) =>{
           :iconSize="[32, 37]"
           :iconAnchor="[16, 37]"
         >
-        </l-icon
-      ></l-marker>
+        </l-icon>
+        <l-tooltip>{{ dest.pointName }}</l-tooltip>
+      </l-marker>
+      <l-marker
+        v-for="poi in poisMarkers ?? []"
+        :lat-lng="poi.latLng"
+        :visible="geojson !== undefined"
+      >
+        <l-icon :icon-url="poi.icon"> </l-icon>
+        <l-tooltip>Możesz zwiedzić: {{ poi.name }}</l-tooltip>
+      </l-marker>
     </l-map>
   </div>
   <div v-if="isTripPicked" class="action-buttons">
-    <img
+    <!-- <img
       @click="addRouteToFav"
       :src="
         isRouteLiked
           ? 'src/assets/violet-heart-icon.svg'
           : 'src/assets/violet-heart-oulined-icon.svg'
       "
-    />
-    <img src="../assets/download-icon.svg" />
+    /> -->
+    <img @click="downloadGPX" src="../assets/download-icon.svg" />
   </div>
 
-  <Transition name="slide-down">
-    <TheTripPicker
-      v-if="isTripPickerVisible && !isTripPicked"
-      :trip-destinations="tripDestinations"
-      @trip-picked="startNavigating"
-    />
-  </Transition>
-
-  <Transition name="slide-down">
+  <!-- <Transition name="slide-down">
     <TheTripSteps v-if="isTripPicked" />
-  </Transition>
+  </Transition> -->
 </template>
 
 <style lang="scss" scoped>

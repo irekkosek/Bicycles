@@ -2,11 +2,15 @@
 import AutoComplete from "primevue/autocomplete";
 import Button from "primevue/button";
 import OverlayPanel from "primevue/overlaypanel";
-import { TheParametersPicker } from ".";
-import { ref, watchEffect } from "vue";
+import ProgressSpinner from "primevue/progressspinner";
+import { ref, watchEffect, defineProps, watch } from "vue";
 import { fetchGeocodingResults } from "../api/getElement";
+import { fetchLoopRouteCSM, fetchRouteCSM } from "../api";
+import { TheTripPicker } from ".";
 
-// const props = defineProps<{ currentTrip: any }>();
+const props = defineProps<{
+  waypoints: any;
+}>();
 
 const filteredCities = ref();
 const stops = ref([]);
@@ -25,17 +29,37 @@ const routeObject = ref([
   },
 ]);
 
+const isParamPickerVisible = ref(false);
+const isTripPickerVisible = ref(false);
+
+const emit = defineEmits([
+  "destination-chosen",
+  "destination-not-chosen",
+  "emit-geo-json",
+  "start-navigating",
+  "route-index",
+]);
+
+watch(
+  () => props.waypoints,
+  async (newValue) => {
+    if (!newValue) return;
+    stops.value.push(newValue as never);
+    await mapAndSendParameters();
+  }
+);
+
 const createLoop = () => {
   routeObject.value[1] = { ...routeObject.value[0], name: "End" };
 };
 
-const emit = defineEmits(["destination-chosen", "destination-not-chosen"]);
-
-const isParamPickerVisible = ref(false);
-
-const search = async (event: any, what: string) => {
-  const propositions = 5;
-  const data = await fetchGeocodingResults(event.query, "near,name", propositions);
+const searchForNewPoint = async (event: any, what: string) => {
+  const propositions = 4;
+  const data = await fetchGeocodingResults(
+    event.query,
+    "near,name",
+    propositions
+  );
 
   filteredCities.value = data.map((element: any) => ({
     name: what,
@@ -43,33 +67,137 @@ const search = async (event: any, what: string) => {
     lat: element.geometry.coordinates[1],
     lon: element.geometry.coordinates[0],
   }));
+
+  const unique = [
+    ...new Set(
+      filteredCities.value.map(
+        ({ pointName }: { pointName: string }) => pointName
+      )
+    ),
+  ];
+
+  filteredCities.value = unique.map((pointName) => {
+    return filteredCities.value.find((el: any) => el.pointName === pointName);
+  });
 };
 
-watchEffect(() => {
+const tripDestinations = ref();
+const isLoaderVisible = ref(false);
+
+const possibleTrips = ref();
+
+const typeOfTrip = ref("");
+
+const searchForTrips = async (destinations: any[]) => {
+  isLoaderVisible.value = true;
+  isTripPickerVisible.value = false;
+  tripDestinations.value = destinations;
+
+  let data;
+
+  // look for loop or normal route
+  if (
+    tripDestinations.value.length === 2 &&
+    tripDestinations.value[0].pointName === tripDestinations.value[1].pointName
+  ) {
+    typeOfTrip.value = "loop";
+    const pointForLooping = tripDestinations.value[0];
+
+    data = await fetchLoopRouteCSM(
+      `${pointForLooping.lon},${pointForLooping.lat}`
+    );
+    possibleTrips.value = data;
+    possibleTrips.value = possibleTrips.value.map((trip: any) => {
+      return {
+        ...trip,
+        myCustomProperties: {
+          ...trip.myCustomProperties,
+          from: routeObject.value.find((element) => element.name === "Start")!
+            .pointName,
+          to: routeObject.value.find((element) => element.name === "End")!
+            .pointName,
+        },
+      };
+    });
+    emit("route-index", 5);
+    showSelectedRoute(0);
+  } else {
+    typeOfTrip.value = "normal";
+    const mapped = tripDestinations.value.map((destination: any) => {
+      return {
+        lat: destination.lat,
+        lon: destination.lon,
+        name: "",
+      };
+    });
+    data = await fetchRouteCSM(mapped);
+    possibleTrips.value = data;
+    possibleTrips.value = possibleTrips.value.map((trip: any) => {
+      return {
+        ...trip,
+        myCustomProperties: {
+          ...trip.myCustomProperties,
+          from: routeObject.value.find((element) => element.name === "Start")!
+            .pointName,
+          to: routeObject.value.find((element) => element.name === "End")!
+            .pointName,
+        },
+      };
+    });
+    showSelectedRoute(lastPicedTripIndex.value);
+  }
+
+  isTripPickerVisible.value = true;
+  isLoaderVisible.value = false;
+};
+
+watchEffect(async () => {
   if (
     !routeObject.value[0] ||
     !routeObject.value[1] ||
     !routeObject.value[0].pointName ||
     !routeObject.value[1].pointName
   ) {
-    emit("destination-not-chosen");
     isParamPickerVisible.value = false;
     return;
   } else {
-    const combined = [
-      routeObject.value[0],
-      ...stops.value,
-      routeObject.value[1],
-    ];
-    emit("destination-chosen", combined);
     isParamPickerVisible.value = true;
+    await mapAndSendParameters();
   }
 });
+
+watch(
+  () => stops.value,
+  async () => {
+    if (stops.value.length === 0) return;
+    await mapAndSendParameters();
+  }
+);
+
+const mapAndSendParameters = async () => {
+  const combined = [routeObject.value[0], ...stops.value, routeObject.value[1]];
+  await searchForTrips(combined);
+};
 
 const overlayPanelComponent = ref();
 
 const toggle = (event: any) => {
   overlayPanelComponent.value.toggle(event);
+};
+
+const lastPicedTripIndex = ref(0);
+
+const showSelectedRoute = (event: any) => {
+  lastPicedTripIndex.value = event;
+  const validGeoJson = possibleTrips.value[event];
+
+  emit("emit-geo-json", validGeoJson);
+  emit("destination-chosen", tripDestinations.value);
+  emit("route-index", event);
+};
+
+const startNavigating = () => {
+  emit("start-navigating");
 };
 </script>
 
@@ -83,7 +211,7 @@ const toggle = (event: any) => {
           :suggestions="filteredCities"
           forceSelection
           :delay="100"
-          @complete="($event) => search($event, 'Start')"
+          @complete="($event) => searchForNewPoint($event, 'Start')"
           optionLabel="pointName"
         />
         <transition name="bounce">
@@ -113,11 +241,11 @@ const toggle = (event: any) => {
             v-model="stops"
             placeholder="Dodaj przystanek"
             :suggestions="filteredCities"
-            @complete="($event) => search($event, 'Waypoint')"
+            @complete="($event) => searchForNewPoint($event, 'Waypoint')"
             optionLabel="pointName"
             forceSelection
             multiple
-            :delay="100"
+            :delay="300"
           />
         </OverlayPanel>
       </div>
@@ -127,25 +255,53 @@ const toggle = (event: any) => {
       v-model="routeObject[1]"
       placeholder="Dokąd?"
       :suggestions="filteredCities"
-      @complete="($event) => search($event, 'End')"
+      @complete="($event) => searchForNewPoint($event, 'End')"
       optionLabel="pointName"
       forceSelection
-      :delay="100"
+      :delay="300"
     />
   </div>
 
-  <Transition name="slide-up">
-    <TheParametersPicker v-if="isParamPickerVisible" />
+  <Button
+    v-if="isTripPickerVisible"
+    class="start-button"
+    icon="pi pi-play"
+    rounded
+    @click="startNavigating"
+  />
+
+  <Transition name="slide-down">
+    <TheTripPicker
+      v-if="isTripPickerVisible"
+      :trip-destinations="possibleTrips"
+      @trip-picked="showSelectedRoute"
+      :type-of-trip="typeOfTrip"
+    />
   </Transition>
+  <div v-if="isLoaderVisible" class="overlay">
+    <ProgressSpinner class="overlay__spinner" />
+  </div>
 </template>
 
 <style scoped lang="scss">
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  height: 100vh;
+  width: 100vw;
+  background-color: rgba(255, 255, 255, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 .destination-picker {
   position: relative;
   z-index: 3;
   padding: 2.5rem;
 
-  background: linear-gradient(180deg, #387ef9 0%, #bf8bed 100%);
+  background: linear-gradient(380deg, #387ef9 0%, #bf8bed 100%);
   filter: drop-shadow(0px 0px 14px rgba(70, 70, 70, 0.24));
   top: -1.5rem;
 
@@ -180,6 +336,12 @@ const toggle = (event: any) => {
       animation: spin 1s ease-in-out infinite forwards;
     }
   }
+}
+
+.start-button {
+  position: absolute;
+  right: 1rem;
+  z-index: 3;
 }
 
 @keyframes spin {
