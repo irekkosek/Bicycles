@@ -12,8 +12,6 @@ const props = defineProps<{
   waypoints: any;
 }>();
 
-const from = ref("");
-const to = ref("");
 const filteredCities = ref();
 const stops = ref([]);
 const routeObject = ref([
@@ -55,23 +53,130 @@ const createLoop = () => {
   routeObject.value[1] = { ...routeObject.value[0], name: "End" };
 };
 
-onMounted(() => {
-  if (!props.currentTrip) return;
-  from.value = props.currentTrip.from ?? "";
-  to.value = props.currentTrip.to ?? "";
-  checkIfBothSelected();
+const searchForNewPoint = async (event: any, what: string) => {
+  const propositions = 4;
+  const data = await fetchGeocodingResults(
+    event.query,
+    "near,name",
+    propositions
+  );
+
+  filteredCities.value = data.map((element: any) => ({
+    name: what,
+    pointName: element.properties.name,
+    lat: element.geometry.coordinates[1],
+    lon: element.geometry.coordinates[0],
+  }));
+
+  const unique = [
+    ...new Set(
+      filteredCities.value.map(
+        ({ pointName }: { pointName: string }) => pointName
+      )
+    ),
+  ];
+
+  filteredCities.value = unique.map((pointName) => {
+    return filteredCities.value.find((el: any) => el.pointName === pointName);
+  });
+};
+
+const tripDestinations = ref();
+const isLoaderVisible = ref(false);
+
+const possibleTrips = ref();
+
+const typeOfTrip = ref("");
+
+const searchForTrips = async (destinations: any[]) => {
+  isLoaderVisible.value = true;
+  isTripPickerVisible.value = false;
+  tripDestinations.value = destinations;
+
+  let data;
+
+  // look for loop or normal route
+  if (
+    tripDestinations.value.length === 2 &&
+    tripDestinations.value[0].pointName === tripDestinations.value[1].pointName
+  ) {
+    typeOfTrip.value = "loop";
+    const pointForLooping = tripDestinations.value[0];
+
+    data = await fetchLoopRouteCSM(
+      `${pointForLooping.lon},${pointForLooping.lat}`
+    );
+    possibleTrips.value = data;
+    possibleTrips.value = possibleTrips.value.map((trip: any) => {
+      return {
+        ...trip,
+        myCustomProperties: {
+          ...trip.myCustomProperties,
+          from: routeObject.value.find((element) => element.name === "Start")!
+            .pointName,
+          to: routeObject.value.find((element) => element.name === "End")!
+            .pointName,
+        },
+      };
+    });
+    emit("route-index", 5);
+    showSelectedRoute(0);
+  } else {
+    typeOfTrip.value = "normal";
+    const mapped = tripDestinations.value.map((destination: any) => {
+      return {
+        lat: destination.lat,
+        lon: destination.lon,
+        name: "",
+      };
+    });
+    data = await fetchRouteCSM(mapped);
+    possibleTrips.value = data;
+    possibleTrips.value = possibleTrips.value.map((trip: any) => {
+      return {
+        ...trip,
+        myCustomProperties: {
+          ...trip.myCustomProperties,
+          from: routeObject.value.find((element) => element.name === "Start")!
+            .pointName,
+          to: routeObject.value.find((element) => element.name === "End")!
+            .pointName,
+        },
+      };
+    });
+    showSelectedRoute(lastPicedTripIndex.value);
+  }
+
+  isTripPickerVisible.value = true;
+  isLoaderVisible.value = false;
+};
+
+watchEffect(async () => {
+  if (
+    !routeObject.value[0] ||
+    !routeObject.value[1] ||
+    !routeObject.value[0].pointName ||
+    !routeObject.value[1].pointName
+  ) {
+    isParamPickerVisible.value = false;
+    return;
+  } else {
+    isParamPickerVisible.value = true;
+    await mapAndSendParameters();
+  }
 });
 
-const emit = defineEmits(["destination-chosen", "destination-not-chosen"]);
+watch(
+  () => stops.value,
+  async () => {
+    if (stops.value.length === 0) return;
+    await mapAndSendParameters();
+  }
+);
 
-const isParamPickerVisible = ref(false);
-
-const search = async (event: any) => {
-  const propositions = 10;
-  const data = await fetchGeocodingResults(event.query, "name", propositions);
-  filteredCities.value = data.map(
-    (item: any) => `${item.properties.name}, ${item.properties.near}`
-  );
+const mapAndSendParameters = async () => {
+  const combined = [routeObject.value[0], ...stops.value, routeObject.value[1]];
+  await searchForTrips(combined);
 };
 
 const overlayPanelComponent = ref();
