@@ -10,7 +10,7 @@ import {
   LTooltip,
 } from "@vue-leaflet/vue-leaflet";
 
-import { fetchNearestPoint, fetchPOI, fetchGpx } from "../api";
+import { fetchNearestPoint, fetchPOI, fetchGpx, fetchCurrentPosition } from "../api";
 import L from "leaflet";
 
 const props = defineProps<{ currentTrip?: any }>();
@@ -23,7 +23,7 @@ const isTripPicked = ref(false);
 const chosenTrip = ref();
 const tripDestinations = ref();
 const geojson = ref(undefined);
-
+const center = ref([50,18]);
 const map = ref();
 
 const waypoint = ref({
@@ -32,7 +32,6 @@ const waypoint = ref({
   lat: 0,
   lon: 0,
 });
-
 onMounted(() => {
   if (!props.currentTrip) return;
   chosenTrip.value = props.currentTrip;
@@ -104,7 +103,11 @@ const showRoute = (e: any) => {
   geojson.value = e.geometry;
   currentItinerary.value = e.myCustomProperties.itinerary;
 };
-
+const getPosition = async() => {
+  const position = await fetchCurrentPosition();
+  const result = [position.coords.latitude,position.coords.longitude];
+  center.value = result;
+}
 const downloadGPX = async () => {
   const gpxUrl = `https://www.cyclestreets.net/journey/${
     currentItinerary.value
@@ -126,6 +129,7 @@ const downloadGPX = async () => {
   a.click();
   document.body.removeChild(a);
   window.URL.revokeObjectURL(url);
+  getPosition();
 };
 </script>
 
@@ -175,7 +179,7 @@ const downloadGPX = async () => {
       ref="map"
       v-model:zoom="zoom"
       :options="{ zoomControl: false }"
-      :center="[50.29117904070245, 18.680356029431803]"
+      :center="center"
       @contextmenu="mapClicked"
     >
       <l-tile-layer
