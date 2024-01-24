@@ -27,10 +27,12 @@ const emit = defineEmits(["trip-cancelled"]);
       {{ props.chosenTrip.from }} - {{ props.chosenTrip.to }}
     </div>
     <div class="trip-info__details">
-      <span class="trip-info__details-item">{{ props.chosenTrip.time }}</span>
-      <span class="trip-info__details-item trip-info__details-item--bolded">{{
-        props.chosenTrip.distance
-      }}</span>
+      <span class="trip-info__details-item"
+        >{{ (parseInt(props.chosenTrip.time) / 3600).toFixed(2) }} h</span
+      >
+      <span class="trip-info__details-item trip-info__details-item--bolded"
+        >{{ (parseInt(props.chosenTrip.distance) / 1000).toFixed(2) }} km</span
+      >
       <span class="trip-info__details-item"
         >{{ props.chosenTrip.kcal }} kcal</span
       >

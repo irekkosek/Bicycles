@@ -1,38 +1,66 @@
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { ref, watch, defineEmits } from "vue";
 import TabMenu, { TabMenuChangeEvent } from "primevue/tabmenu";
 import SelectButton from "primevue/selectbutton";
 
 const isParamPickerExpanded = ref(false);
 
 const items = ref([
+  // {
+  //   name: "Typ rowera",
+
+  //   props: [
+  //     { value: "fastest", name: "Górski", type: "planType" },
+  //     { value: "quietest", name: "Miejski", type: "planType" },
+  //     { value: "balanced", name: "Szosowy", type: "planType" },
+  //   ],
+  // },
+  // {
+  //   name: "Cel wycieczki",
+
+  //   props: [
+  //     {
+  //       value: "attractions,castles,museums,ruins",
+  //       name: "Zwiedzanie",
+  //       type: "poiTypes",
+  //     },
+  //     {
+  //       value: "viewpoiTypesnts,parkandridesites",
+  //       name: "Góry",
+  //       type: "poiTypes",
+  //     },
+  //     {
+  //       value: "supermarkets,cinemas,libraries",
+  //       name: "Wycieczka po mieście",
+  //       type: "poiTypes",
+  //     },
+  //     {
+  //       value: "pubs,restaurants,cafes",
+  //       name: "Gastronomia",
+  //       type: "poiTypes",
+  //     },
+  //   ],
+  // },
+  // {
+  //   name: "Czas podróży",
+
+  //   props: [
+  //     { value: "1800", name: "< 1h", type: "duration" },
+  //     { value: "5400", name: "1-2h", type: "duration" },
+  //     { value: "9000", name: "3-4h", type: "duration" },
+  //     { value: "12600", name: "5-6h", type: "duration" },
+  //     { value: "16200", name: "> 8h", type: "duration" },
+  //   ],
+  // },
   {
-    name: "Typ rowera",
+    name: "Dystans",
+
     props: [
-      { value: "type-1", name: "Górski" },
-      { value: "type-2", name: "Miejski" },
-      { value: "type-3", name: "BMX" },
-      { value: "type-4", name: "Szosowy" },
-      { value: "type-5", name: "Inny" },
-    ],
-  },
-  {
-    name: "Cel wycieczki",
-    props: [
-      { value: "goal-1", name: "Zwiedzanie" },
-      { value: "goal-2", name: "Góry" },
-      { value: "goal-3", name: "Trening" },
-      { value: "goal-4", name: "Gastronomia" },
-    ],
-  },
-  {
-    name: "Czas podróży",
-    props: [
-      { value: "time-1", name: "< 1h" },
-      { value: "time-2", name: "1-2h" },
-      { value: "time-3", name: "3-4h" },
-      { value: "time-4", name: "5-6h" },
-      { value: "time-5", name: "> 8h" },
+      { value: "10000", name: "< 10km", type: "distance" },
+      { value: "15000", name: "10-20km", type: "distance" },
+      { value: "25000", name: "20-30km", type: "distance" },
+      { value: "35000", name: "30-40km", type: "distance" },
+      { value: "45000", name: "> 40km", type: "distance" },
     ],
   },
 ]);
@@ -44,7 +72,11 @@ const changeCurrentTabIndex = ({ index }: TabMenuChangeEvent) =>
 
 const selectedParameters = ref(null);
 
-watch(selectedParameters, () => console.log(selectedParameters.value));
+const emit = defineEmits(["parameters-chosen"]);
+
+watch(selectedParameters, () => {
+  emit("parameters-chosen", selectedParameters.value);
+});
 </script>
 
 <template>

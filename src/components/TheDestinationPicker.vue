@@ -2,22 +2,57 @@
 import AutoComplete from "primevue/autocomplete";
 import Button from "primevue/button";
 import OverlayPanel from "primevue/overlaypanel";
-import { TheParametersPicker } from ".";
-import { onMounted, ref } from "vue";
+import ProgressSpinner from "primevue/progressspinner";
+import { ref, watchEffect, defineProps, watch } from "vue";
 import { fetchGeocodingResults } from "../api/getElement";
+import { fetchLoopRouteCSM, fetchRouteCSM } from "../api";
+import { TheTripPicker } from ".";
 
-const props = defineProps<{ currentTrip: any }>();
+const props = defineProps<{
+  waypoints: any;
+}>();
 
 const from = ref("");
 const to = ref("");
-const cities = ["Gliwice", "Mikołów"];
 const filteredCities = ref();
-const newStop = ref("");
+const stops = ref([]);
+const routeObject = ref([
+  {
+    name: "Start",
+    pointName: "",
+    lat: 0,
+    lon: 0,
+  },
+  {
+    name: "End",
+    pointName: "",
+    lat: 0,
+    lon: 0,
+  },
+]);
 
+const isParamPickerVisible = ref(false);
+const isTripPickerVisible = ref(false);
+
+const emit = defineEmits([
+  "destination-chosen",
+  "destination-not-chosen",
+  "emit-geo-json",
+  "start-navigating",
+  "route-index",
+]);
+
+watch(
+  () => props.waypoints,
+  async (newValue) => {
+    if (!newValue) return;
+    stops.value.push(newValue as never);
+    await mapAndSendParameters();
+  }
+);
 
 const createLoop = () => {
-  to.value = from.value;
-  checkIfBothSelected();
+  routeObject.value[1] = { ...routeObject.value[0], name: "End" };
 };
 
 onMounted(() => {
@@ -28,6 +63,7 @@ onMounted(() => {
 });
 
 const emit = defineEmits(["destination-chosen", "destination-not-chosen"]);
+
 const isParamPickerVisible = ref(false);
 
 const search = async (event: any) => {
@@ -44,21 +80,19 @@ const toggle = (event: any) => {
   overlayPanelComponent.value.toggle(event);
 };
 
-const checkIfBothSelected = () => {
-  if (from.value && to.value && from.value.length > 0 && to.value.length > 0) {
-    emit("destination-chosen", { from: from.value, to: to.value });
-    isParamPickerVisible.value = true;
-  } else {
-    emit("destination-not-chosen");
-    isParamPickerVisible.value = false;
-  }
+const lastPicedTripIndex = ref(0);
+
+const showSelectedRoute = (event: any) => {
+  lastPicedTripIndex.value = event;
+  const validGeoJson = possibleTrips.value[event];
+
+  emit("emit-geo-json", validGeoJson);
+  emit("destination-chosen", tripDestinations.value);
+  emit("route-index", event);
 };
 
-const checkIfAnyIsNull = () => {
-  if (!from.value || !to.value) {
-    emit("destination-not-chosen");
-    isParamPickerVisible.value = false;
-  }
+const startNavigating = () => {
+  emit("start-navigating");
 };
 </script>
 
@@ -67,26 +101,28 @@ const checkIfAnyIsNull = () => {
     <div class="flex-row">
       <span class="from-picker">
         <AutoComplete
-          v-model="from"
+          v-model="routeObject[0]"
           placeholder="Skąd?"
           :suggestions="filteredCities"
-          @complete="search"
-          @item-select="checkIfBothSelected"
-          @change="checkIfAnyIsNull"
           forceSelection
           :delay="100"
+          @complete="($event) => searchForNewPoint($event, 'Start')"
+          optionLabel="pointName"
         />
         <transition name="bounce">
-          <img
-            v-if="from && from.length"
-            src="../assets/loop.svg"
-            class="loop-icon"
-            @click="createLoop"
-          />
+          <img src="../assets/loop.svg" class="loop-icon" @click="createLoop" />
         </transition>
       </span>
 
-      <div class="add-stop">
+      <div
+        v-if="
+          routeObject[0] &&
+            routeObject[1] &&
+            routeObject[0].pointName &&
+            routeObject[1].pointName
+        "
+        class="add-stop"
+      >
         <Button
           class="add-stop__button"
           icon="pi pi-plus"
@@ -96,42 +132,71 @@ const checkIfAnyIsNull = () => {
         />
         <OverlayPanel ref="overlayPanelComponent">
           <AutoComplete
-            v-model="newStop"
+            v-if="isParamPickerVisible"
+            v-model="stops"
             placeholder="Dodaj przystanek"
             :suggestions="filteredCities"
-            @complete="search"
+            @complete="($event) => searchForNewPoint($event, 'Waypoint')"
+            optionLabel="pointName"
             forceSelection
             multiple
-            :delay="100"
+            :delay="300"
           />
         </OverlayPanel>
       </div>
     </div>
 
     <AutoComplete
-      v-model="to"
+      v-model="routeObject[1]"
       placeholder="Dokąd?"
       :suggestions="filteredCities"
-      @complete="search"
-      @item-select="checkIfBothSelected"
-      @change="checkIfAnyIsNull"
+      @complete="($event) => searchForNewPoint($event, 'End')"
+      optionLabel="pointName"
       forceSelection
-      :delay="100"
+      :delay="300"
     />
   </div>
 
-  <Transition name="slide-up">
-    <TheParametersPicker v-if="isParamPickerVisible" />
+  <Button
+    v-if="isTripPickerVisible"
+    class="start-button"
+    icon="pi pi-play"
+    rounded
+    @click="startNavigating"
+  />
+
+  <Transition name="slide-down">
+    <TheTripPicker
+      v-if="isTripPickerVisible"
+      :trip-destinations="possibleTrips"
+      @trip-picked="showSelectedRoute"
+      :type-of-trip="typeOfTrip"
+    />
   </Transition>
+  <div v-if="isLoaderVisible" class="overlay">
+    <ProgressSpinner class="overlay__spinner" />
+  </div>
 </template>
 
 <style scoped lang="scss">
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  height: 100vh;
+  width: 100vw;
+  background-color: rgba(255, 255, 255, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 .destination-picker {
   position: relative;
   z-index: 3;
   padding: 2.5rem;
 
-  background: linear-gradient(180deg, #387ef9 0%, #bf8bed 100%);
+  background: linear-gradient(380deg, #387ef9 0%, #bf8bed 100%);
   filter: drop-shadow(0px 0px 14px rgba(70, 70, 70, 0.24));
   top: -1.5rem;
 
@@ -166,6 +231,12 @@ const checkIfAnyIsNull = () => {
       animation: spin 1s ease-in-out infinite forwards;
     }
   }
+}
+
+.start-button {
+  position: absolute;
+  right: 1rem;
+  z-index: 3;
 }
 
 @keyframes spin {
