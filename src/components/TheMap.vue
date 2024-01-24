@@ -33,6 +33,16 @@ const waypoint = ref({
 });
 
 onMounted(() => {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition((position) => {
+      const latitude = position.coords.latitude;
+      const longitude = position.coords.longitude;
+      newCenter.value = [latitude, longitude];
+    });
+  } else {
+    console.log("Geolocation is not supported by this browser.");
+  }
+
   if (!props.currentTrip) return;
   chosenTrip.value = props.currentTrip;
   isTripPicked.value = true;
@@ -178,10 +188,11 @@ const downloadGPX = async () => {
 
   <div class="map">
     <l-map
+      v-if="newCenter"
       ref="map"
       v-model:zoom="zoom"
       :options="{ zoomControl: false }"
-      :center="newCenter ?? [50.29117904070245, 18.680356029431803]"
+      :center="newCenter"
       @contextmenu="mapClicked"
     >
       <l-tile-layer
