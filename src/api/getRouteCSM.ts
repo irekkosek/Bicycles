@@ -110,9 +110,7 @@ export const fetchRouteCSM = async (itineraryPoints: ItineraryPoint[]) => {
       )}&plan=${type}`;
       const response = await fetch(url);
       const data = await response.json();
-      const interary = data.marker[0]["@attributes"].itinerary;
-      const gpxUrl = `https://www.cyclestreets.net/journey/${interary}/cyclestreets${interary}${plan}.gpx`;
-      return [convertToGeoJSON(data), gpxUrl];
+      return convertToGeoJSON(data);
     })
   );
 

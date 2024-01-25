@@ -10,6 +10,7 @@ const props = defineProps<{
     myCustomProperties: {
       from: string;
       to: string;
+      length: string;
     };
   }[];
 }>();
@@ -25,6 +26,8 @@ const allTypes = computed(() => {
 });
 
 const emit = defineEmits(["trip-picked"]);
+
+const indexActive = ref();
 </script>
 
 <template>
@@ -48,19 +51,29 @@ const emit = defineEmits(["trip-picked"]);
         v-for="({ myCustomProperties }, index) in props.tripDestinations"
         :key="index"
         class="trip-item"
+        :class="indexActive === index ? 'trip-item--active' : ''"
         @click="
           () => {
             emit('trip-picked', index);
             isTripPickerExpanded = false;
+            indexActive = 0;
+            // move element to the start of the array
+            const element = props.tripDestinations.splice(index, 1);
+            props.tripDestinations.unshift(element[0]);
+
+            // move element from allTypes to the start of the array
+            const element2 = allTypes!.splice(index, 1);
+            allTypes!.unshift(element2[0]);
           }
         "
       >
-        <div class="trip-item__name">
-          {{ myCustomProperties.from }} - {{ myCustomProperties.to }}
-        </div>
         <div v-if="allTypes" class="trip-item__distance">
           {{ typeOfTrip === "normal" ? "Rower" : "" }} {{ allTypes[index] }}
           {{ typeOfTrip === "loop" ? "km" : "" }}
+        </div>
+        <div class="trip-item__name">
+          {{ (parseInt(myCustomProperties.length) / 1000).toFixed(2) }}
+          km
         </div>
       </div>
     </div>
@@ -105,6 +118,15 @@ const emit = defineEmits(["trip-picked"]);
 
       transition: all 0.2s ease-in-out;
 
+      &--active {
+        background: linear-gradient(
+          93deg,
+          #b55ddf 24.42%,
+          #4a95cc 78.81%
+        ) !important;
+        color: #fff !important;
+      }
+
       &:hover {
         cursor: pointer;
         background: linear-gradient(93deg, #b55ddf 24.42%, #4a95cc 78.81%);
@@ -121,7 +143,7 @@ const emit = defineEmits(["trip-picked"]);
     }
   }
   &--expanded {
-    height: 40%;
+    height: 42%;
   }
 
   &__expander {

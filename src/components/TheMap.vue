@@ -12,7 +12,6 @@ import {
 
 import { fetchNearestPoint, fetchPOI, fetchGpx } from "../api";
 import L from "leaflet";
-
 const props = defineProps<{ currentTrip?: any }>();
 
 const zoom = ref(15);
@@ -34,10 +33,26 @@ const waypoint = ref({
 });
 
 onMounted(() => {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition((position) => {
+      const latitude = position.coords.latitude;
+      const longitude = position.coords.longitude;
+      newCenter.value = [latitude, longitude];
+    });
+  } else {
+    console.log("Geolocation is not supported by this browser.");
+  }
+
   if (!props.currentTrip) return;
   chosenTrip.value = props.currentTrip;
   isTripPicked.value = true;
 });
+
+const newCenter = ref();
+
+const zoomToStart = (e: any) => {
+  newCenter.value = [e.lat, e.lon];
+};
 
 const stopNavigating = () => {
   isTripPicked.value = false;
@@ -161,6 +176,7 @@ const downloadGPX = async () => {
         fitBounds();
       }
     "
+    @emit-start="zoomToStart"
   />
   <Transition name="fade-in">
     <TheTripInfo
@@ -172,10 +188,11 @@ const downloadGPX = async () => {
 
   <div class="map">
     <l-map
+      v-if="newCenter"
       ref="map"
       v-model:zoom="zoom"
       :options="{ zoomControl: false }"
-      :center="[50.29117904070245, 18.680356029431803]"
+      :center="newCenter"
       @contextmenu="mapClicked"
     >
       <l-tile-layer
@@ -213,7 +230,12 @@ const downloadGPX = async () => {
         :visible="geojson !== undefined"
       >
         <l-icon :icon-url="poi.icon"> </l-icon>
-        <l-tooltip>Możesz zwiedzić: {{ poi.name }}</l-tooltip>
+        <l-tooltip
+          >Możesz zwiedzić:
+          {{
+            poi.name === "Un-named place of interest" ? "to miejsce" : poi.name
+          }}</l-tooltip
+        >
       </l-marker>
     </l-map>
   </div>
