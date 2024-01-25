@@ -184,6 +184,14 @@ const mapAndSendParameters = async () => {
   await searchForTrips(combined);
 };
 
+watch(
+  () => stops.value,
+  async () => {
+    if (stops.value.length === 0) return;
+    await mapAndSendParameters();
+  }
+);
+
 const overlayPanelComponent = ref();
 
 const toggle = (event: any) => {
